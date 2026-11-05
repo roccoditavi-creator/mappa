@@ -21,12 +21,12 @@ button:hover,select:hover{border-color:var(--acc)}button.on{background:#27506e;b
 .rw{display:flex;gap:10px;align-items:center;margin:10px 0 4px}.box small{color:var(--mut)}
 @media(max-width:640px){#top h1{display:none}}
 </style></head><body>
-<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v13</small></h1><span class="t" id="tit"></span>
+<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v14</small></h1><span class="t" id="tit"></span>
 <button id="bCa" class="on">Candele</button><select id="sTf"><option value="15000">15 s</option><option value="60000" selected>1 min</option><option value="300000">5 min</option></select>
 <button id="bNe" class="on">Sfondo nero</button><button id="bCo" title="Intensità e contrasto della mappa di calore">Colori ▾</button><button id="bBo" class="on">Bolle</button><button id="bVo" class="on">Volume</button>
 <button id="bYm" title="Scala prezzo: Auto = si adatta ai dati visibili; Fisso = altezza fissa centrata sul prezzo; Libero = la sposti tu">Prezzo: Fisso</button><button id="bY1" title="Riduci altezza (più zoom sul prezzo)">Altezza −</button><button id="bY2" title="Aumenta altezza (meno zoom sul prezzo)">Altezza +</button>
 <button id="bG1" title="Granularità più fine: righe più sottili ([)">Passo −</button><button id="bGl" title="Passo del prezzo; clic = automatico">Passo: auto</button><button id="bG2" title="Granularità più larga: righe più spesse (])">Passo +</button>
-<button id="bR">Vista intera</button><button id="bU" title="Ricentra il grafico su prezzo e ultime transazioni (tasto C)">Ricentra</button><button id="bL">Live</button><button id="bC">Copia per Claude</button></div>
+<button id="bR">Vista intera</button><button id="bU" title="Ricentra il grafico su prezzo e ultime transazioni (tasto C)">Ricentra</button><select id="sFe" title="Sorgente dati del Live"><option value="kr">Kraken spot</option><option value="okp">OKX perp BTC-USDT</option><option value="oks">OKX spot BTC-USDT</option></select><button id="bL">Live</button><button id="bC">Copia per Claude</button></div>
 <div id="hp" hidden><b>Mappa di calore</b><canvas id="hg" width="240" height="14"></canvas>
 <label>Luminosità <span id="vl"></span></label><input type="range" id="rl" min="40" max="220" step="5">
 <label>Contrasto <span id="vc"></span></label><input type="range" id="rc" min="50" max="300" step="5">
@@ -255,15 +255,24 @@ window.addEventListener("resize",size);
 function load(d){S=d.samples.map(s=>{const c=[];if(s[2].length&&typeof s[2][0]==="number"){for(let i=0;i<s[2].length;i+=3)c.push([s[2][i],s[2][i+1],s[2][i+2]])}else for(const k of s[2])c.push(k);return{t:s[0],mid:s[1],c}});TR=d.trades;EV=d.eventi||[];title=d.titolo;$("tit").textContent=title;prep();fit()}
 // ---- live Kraken (feed pubblico v2)
 let ws=null,bids=new Map(),asks=new Map(),timer=null;
+let pingT=null;const FE={kr:"Kraken BTC/USD spot (libro 100 livelli)",okp:"OKX BTC-USDT-SWAP perp (libro 400 livelli, contratti da 0.01 BTC)",oks:"OKX BTC-USDT spot (libro 400 livelli)"};
+function addTrade(t){TR.push(t);CV.push((CV.length?CV[CV.length-1]:0)+t[3]*t[2]);const b=Math.floor(t[1]);let o=svp.get(b);if(!o){o={b:0,s:0};svp.set(b,o)}t[3]>0?o.b+=t[2]:o.s+=t[2]}
 function liveStart(){
-  S=[];TR=[];CV=[];EV=[];svp=new Map();bids.clear();asks.clear();live=true;title="LIVE Kraken BTC/USD (libro 100 livelli)";$("tit").textContent=title;
-  ws=new WebSocket("wss://ws.kraken.com/v2");
+  S=[];TR=[];CV=[];EV=[];svp=new Map();bids.clear();asks.clear();live=true;const fe=$("sFe").value;title="LIVE "+FE[fe];$("tit").textContent=title;clearInterval(pingT);
+  if(fe==="kr"){ws=new WebSocket("wss://ws.kraken.com/v2");
   ws.onopen=()=>{ws.send(JSON.stringify({method:"subscribe",params:{channel:"book",symbol:["BTC/USD"],depth:100}}));ws.send(JSON.stringify({method:"subscribe",params:{channel:"trade",symbol:["BTC/USD"]}}))};
   ws.onmessage=e=>{const m=JSON.parse(e.data);
     if(m.channel==="book"&&m.data){for(const d of m.data){if(m.type==="snapshot"){bids.clear();asks.clear()}for(const p of d.bids){p.qty===0?bids.delete(p.price):bids.set(p.price,p.qty)}for(const p of d.asks){p.qty===0?asks.delete(p.price):asks.set(p.price,p.qty)}}
       const ba=Math.min(...asks.keys()),bb=Math.max(...bids.keys());for(const k of [...asks.keys()])if(k<=bb)asks.delete(k);for(const k of [...bids.keys()])if(k>=ba)bids.delete(k)}
     else if(m.channel==="trade"&&m.data){for(const x of m.data){const t=[Date.parse(x.timestamp),x.price,x.qty,x.side==="buy"?1:-1];TR.push(t);CV.push((CV.length?CV[CV.length-1]:0)+t[3]*t[2]);const b=Math.floor(t[1]);let o=svp.get(b);if(!o){o={b:0,s:0};svp.set(b,o)}t[3]>0?o.b+=t[2]:o.s+=t[2]}}};
-  ws.onclose=()=>{clearInterval(timer)};
+  }else{const inst=fe==="okp"?"BTC-USDT-SWAP":"BTC-USDT",mul=fe==="okp"?0.01:1;ws=new WebSocket("wss://ws.okx.com/ws/v5/public");
+    ws.onopen=()=>{ws.send(JSON.stringify({op:"subscribe",args:[{channel:"books",instId:inst},{channel:"trades",instId:inst}]}));pingT=setInterval(()=>{try{ws.send("ping")}catch(e){}},20000)};
+    ws.onmessage=e=>{if(e.data==="pong")return;let m;try{m=JSON.parse(e.data)}catch(x){return}if(!m.arg||!m.data)return;
+      if(m.arg.channel==="books"){const d=m.data[0];if(m.action==="snapshot"){bids.clear();asks.clear()}
+        for(const p of d.bids){const px=+p[0],q=+p[1]*mul;q===0?bids.delete(px):bids.set(px,q)}for(const p of d.asks){const px=+p[0],q=+p[1]*mul;q===0?asks.delete(px):asks.set(px,q)}
+        if(asks.size&&bids.size){const ba=Math.min(...asks.keys()),bb=Math.max(...bids.keys());for(const k of [...asks.keys()])if(k<=bb)asks.delete(k);for(const k of [...bids.keys()])if(k>=ba)bids.delete(k)}}
+      else if(m.arg.channel==="trades"){for(const x of m.data)addTrade([+x.ts,+x.px,+x.sz*mul,x.side==="buy"?1:-1])}}}
+  ws.onclose=()=>{clearInterval(timer);clearInterval(pingT)};
   timer=setInterval(()=>{if(!bids.size||!asks.size)return;const bb=Math.max(...bids.keys()),ba=Math.min(...asks.keys()),cells=new Map();
     for(const [p,q] of bids)if(p>=bb-80){const k=Math.floor(p)+"b",o=cells.get(k)||[Math.floor(p),0,0];o[1]+=q;cells.set(k,o)}
     for(const [p,q] of asks)if(p<=ba+80){const k=Math.floor(p)+"a",o=cells.get(k)||[Math.floor(p),0,1];o[1]+=q;cells.set(k,o)}
@@ -272,7 +281,8 @@ function liveStart(){
     if(S.length===1||S.length%30===0){const q=[];for(const s of S.slice(-200))for(const k of s.c)q.push(k[1]);q.sort((a,b)=>a-b);if(q.length){QREF=Math.max(.05,q[q.length>>1]);QMAX=Math.max(QREF*4,q[Math.floor(q.length*.995)])}}
     if(S.length<3)fit();else if(follow){const span=v.t1-v.t0,fut=span*L.FUT;v.t1=now+fut;v.t0=v.t1-span;const c=(bb+ba)/2;if(c<v.p0+8||c>v.p1-8){const m=v.p1-v.p0;v.p0=c-m/2;v.p1=c+m/2}}
     if(ym!=="libero")applyY();dirty=true;draw()},500)}
-$("bL").onclick=function(){if(!live){this.classList.add("on");this.textContent="Replay";liveStart()}else{if(ws)ws.close();clearInterval(timer);live=false;this.classList.remove("on");this.textContent="Live";load(window.DATI3);draw()}};
+$("sFe").onchange=()=>{if(live){if(ws)ws.close();clearInterval(timer);clearInterval(pingT);liveStart()}};
+$("bL").onclick=function(){if(!live){this.classList.add("on");this.textContent="Replay";liveStart()}else{if(ws)ws.close();clearInterval(timer);clearInterval(pingT);live=false;this.classList.remove("on");this.textContent="Live";load(window.DATI3);draw()}};
 // ---- Copia per Claude
 function snapshot(){
   const f1=x=>x.toFixed(1),f2=x=>x.toFixed(2),j0=lb(TR,v.t0,t=>t[0]);let j1=j0;while(j1<TR.length&&TR[j1][0]<=v.t1)j1++;
