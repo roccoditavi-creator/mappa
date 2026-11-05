@@ -20,7 +20,7 @@ button:hover,select:hover{border-color:var(--acc)}button.on{background:#27506e;b
 .rw{display:flex;gap:10px;align-items:center;margin:10px 0 4px}.box small{color:var(--mut)}
 @media(max-width:640px){#top h1{display:none}}
 </style></head><body>
-<div id="top"><h1>Mappa liquidità</h1><span class="t" id="tit"></span>
+<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v12</small></h1><span class="t" id="tit"></span>
 <button id="bCa" class="on">Candele</button><select id="sTf"><option value="15000">15 s</option><option value="60000" selected>1 min</option><option value="300000">5 min</option></select>
 <button id="bNe" class="on">Sfondo nero</button><button id="bBo" class="on">Bolle</button><button id="bVo" class="on">Volume</button>
 <button id="bYm" title="Scala prezzo: Auto = si adatta ai dati visibili; Fisso = altezza fissa centrata sul prezzo; Libero = la sposti tu">Prezzo: Fisso</button><button id="bY1" title="Riduci altezza (più zoom sul prezzo)">Altezza −</button><button id="bY2" title="Aumenta altezza (meno zoom sul prezzo)">Altezza +</button>
@@ -99,6 +99,7 @@ function renderBase(){
   if(S.length){const s=S[S.length-1],xf=tx(s.t)+2;if(xf<w){for(const k of agg(s.c,stp)){if(k[0]+stp<v.p0||k[0]>v.p1)continue;const idx=Math.min(63,Math.floor(Math.log1p(k[1]/sc/QREF)/lq*63));if(idx<=1)continue;
       const y1=py(k[0]+stp),y0=py(k[0]);x.fillStyle=PAL[idx];const hh=Math.max(1.5,y0-y1-1);x.fillRect(xf,y1+.5,w-xf,hh)}}
     x.strokeStyle="#ffffffcc";x.lineWidth=1;x.beginPath();x.moveTo(xf-2,0);x.lineTo(xf-2,h);x.stroke()}
+  x.strokeStyle="rgba(255,255,255,.09)";x.lineWidth=1;if(stp*pmain()/(v.p1-v.p0)>=7)for(let p=Math.ceil(v.p0/stp)*stp;p<v.p1;p+=stp){const Y=Math.round(py(p))+.5;x.beginPath();x.moveTo(0,Y);x.lineTo(w,Y);x.stroke()}
   // griglia verticale ogni passo di tempo
   const tr=(v.t1-v.t0)/(W<640?4:8);const step=TST.find(a=>a>=tr)||TST[TST.length-1];
   x.setLineDash([3,4]);x.strokeStyle="#ffffff22";for(let t=Math.ceil(v.t0/step)*step;t<v.t1;t+=step){const X=tx(t);x.beginPath();x.moveTo(X,0);x.lineTo(X,h);x.stroke()}x.setLineDash([]);
