@@ -38,9 +38,9 @@ const $=id=>document.getElementById(id),cv=$("c"),cx=cv.getContext("2d"),tip=$("
 const bc=document.createElement("canvas"),bx=bc.getContext("2d");
 let S=[],TR=[],CV=[],EV=[],title="",live=false,follow=true;
 let W=0,H=0,v={t0:0,t1:1,p0:0,p1:1},dirty=true,cross=null,hit=[],drag=null;
-let L={AX:50,COB:46,SVP:92,CVD:120,TAX:22,VOL:46,FUT:.35};
+let L={AX:50,COB:46,SVP:92,CVD:120,TAX:22,VOL:46,FUT:.1};
 let ym="fisso",fixH=60;
-const opt={candele:true,bolle:true,volume:true,tf:60000,nero:true,pres2:.85};
+const opt={candele:true,bolle:true,volume:true,tf:60000,nero:true,pres3:.9};
 try{const o=JSON.parse(localStorage.getItem("mappa_opt")||"{}");Object.assign(opt,o)}catch(e){}
 function saveOpt(){try{localStorage.setItem("mappa_opt",JSON.stringify(opt))}catch(e){}}
 // ---- palette calore: fondo ardesia -> blu -> arancio -> rosso -> giallo -> bianco
@@ -63,7 +63,7 @@ const TST=[1,2,5,10,20,50,100,200,500,1e3,2e3,5e3,1e4,2e4,3e4,6e4,12e4,3e5,6e5,9
 const pd=(n,l=2)=>String(n).padStart(l,"0");
 function fmtT(t,ms){const d=new Date(t);return pd(d.getUTCHours())+":"+pd(d.getUTCMinutes())+":"+pd(d.getUTCSeconds())+(ms?"."+pd(d.getUTCMilliseconds(),3):"")}
 function fmtHM(t){const d=new Date(t);return pd(d.getUTCHours())+":"+pd(d.getUTCMinutes())}
-function lay(){const n=innerWidth<700;L.FUT=1-Math.min(.94,Math.max(.4,opt.pres2||.85));L.AX=n?42:50;L.COB=n?0:78;L.SVP=n?44:92;L.CVD=n?90:120}
+function lay(){const n=innerWidth<700;L.FUT=1-Math.min(.95,Math.max(.6,opt.pres3||.9));L.AX=n?48:64;L.COB=n?0:100;L.SVP=n?60:130;L.CVD=n?90:120}
 function fit(){
   if(!S.length)return;
   const last=S[S.length-1].t,span=live?150000:2400000;
@@ -122,13 +122,13 @@ function renderBase(){
     for(const c of cs){const X=tx(c.tl),hb=c.b/mxv*H0,hs=c.s/mxv*H0;x.fillStyle="rgba(229,96,90,.75)";x.fillRect(X-cw/2,h-hs,cw,hs);x.fillStyle="rgba(70,209,123,.75)";x.fillRect(X-cw/2,h-hs-hb,cw,hb)}}
   x.restore();
   // asse prezzi + griglia
-  x.fillStyle="#222a33";x.fillRect(w,0,L.AX,h);x.fillStyle="#9fb0c2";x.font="11px system-ui";
-  const ps=nice(v.p1-v.p0,10);for(let p=Math.ceil(v.p0/ps)*ps;p<v.p1;p+=ps){const Y=py(p);x.fillText(p.toFixed(ps<1?1:0),w+4,Y+4);x.strokeStyle="#ffffff0d";x.beginPath();x.moveTo(0,Y);x.lineTo(w,Y);x.stroke()}
+  x.fillStyle="#222a33";x.fillRect(w,0,L.AX,h);x.fillStyle="#c5d1de";x.font="13px system-ui";
+  const ps=nice(v.p1-v.p0,10);for(let p=Math.ceil(v.p0/ps)*ps;p<v.p1;p+=ps){const Y=py(p);x.fillText(p.toFixed(ps<1?1:0),w+5,Y+5);x.strokeStyle="#ffffff0d";x.beginPath();x.moveTo(0,Y);x.lineTo(w,Y);x.stroke()}
   // SVP: profilo del volume di sessione (tutti i trade), acquisti e vendite
   x.save();x.beginPath();x.rect(w+L.AX+L.COB,0,L.SVP,h);x.clip();x.fillStyle="#1f262e";x.fillRect(w+L.AX+L.COB,0,L.SVP,h);
   let mx=0,poc=-1,pm=0;for(const [b,o] of svp){if(b<v.p0-1||b>v.p1)continue;const t=o.b+o.s;if(t>mx)mx=t;if(t>pm){pm=t;poc=b}}
   const sx=w+L.AX+L.COB;
-  if(L.SVP>0&&mx>0){for(const [b,o] of svp){if(b<v.p0-1||b>v.p1)continue;const y1=py(b+1),y0=py(b),hh=Math.max(1,y0-y1-.4),wb=o.b/mx*(L.SVP-6),ws=o.s/mx*(L.SVP-6);x.fillStyle="rgba(70,209,123,.85)";x.fillRect(sx+2,y1,wb,hh);x.fillStyle="rgba(229,96,90,.85)";x.fillRect(sx+2+wb,y1,ws,hh)}
+  if(L.SVP>0&&mx>0){for(const [b,o] of svp){if(b<v.p0-1||b>v.p1)continue;const y1=py(b+1),y0=py(b),hh=Math.max(1,y0-y1-.4),wb=o.b/mx*(L.SVP-4),ws=o.s/mx*(L.SVP-4);const xr=sx+L.SVP;x.fillStyle="rgba(229,96,90,.9)";x.fillRect(xr-ws,y1,ws,hh);x.fillStyle="rgba(70,209,123,.9)";x.fillRect(xr-ws-wb,y1,wb,hh)}
     if(poc>=0){x.strokeStyle="#ffd166";x.beginPath();x.moveTo(sx,py(poc+.5));x.lineTo(sx+L.SVP,py(poc+.5));x.stroke()}}
   x.restore();x.fillStyle="#9fb0c2";x.font="10px system-ui";if(L.SVP>=80)x.fillText("PROFILO",sx+4,10);
   // CVD
@@ -160,19 +160,19 @@ function draw(){
   // colonna del libro (COB): quantita' per livello, al momento del cursore (o ultimo)
   if(L.COB>0&&S.length){let smp=S[S.length-1];if(cross){const i=Math.max(0,Math.min(S.length-1,lb(S,xt(cross.x),s=>s.t)-1));if(S[i]&&xt(cross.x)<=S[S.length-1].t)smp=S[i]}
     const px=(h)/(v.p1-v.p0);const cx0=w+L.AX;cx.fillStyle="#1f262e";cx.fillRect(cx0,0,L.COB,h);cx.font="10px system-ui";
-    const ST_=[1,2,5,10,20,25,50,100],stp=ST_.find(a=>a*px>=13)||100;
+    const ST_=[1,2,5,10,20,25,50,100],stp=ST_.find(a=>a*px>=16)||100;
     const bins=new Map();for(const k of smp.c){const b=Math.floor(k[0]/stp)*stp;let o=bins.get(b);if(!o){o={q:0,a:0,b:0};bins.set(b,o)}o.q+=k[1];k[2]===1?o.a+=k[1]:o.b+=k[1]}
     let mxq=1e-9;for(const [p,o] of bins)if(p+stp>=v.p0&&p<=v.p1)mxq=Math.max(mxq,o.q);
-    cx.font="10px ui-monospace,Consolas,monospace";
+    cx.font="bold 13px ui-monospace,Consolas,monospace";
     for(const [p,o] of bins){if(p+stp<v.p0||p>v.p1)continue;const y1=py(p+stp),y0=py(p),hh=Math.max(1,y0-y1-1),isAsk=o.a>=o.b;
-      cx.fillStyle=isAsk?"rgba(240,140,50,.85)":"rgba(70,209,123,.8)";cx.fillRect(cx0+L.COB*.42,y1+.5,Math.max(1,o.q/mxq*(L.COB*.58-2)),hh);
-      if(hh>=10){cx.fillStyle="#cfd8e2";cx.fillText(o.q>=10?o.q.toFixed(1):o.q.toFixed(2),cx0+2,y1+hh/2+3.5)}}
+      cx.fillStyle=isAsk?"rgba(240,140,50,.85)":"rgba(70,209,123,.8)";cx.fillRect(cx0+L.COB*.5,y1+.5,Math.max(1,o.q/mxq*(L.COB*.5-2)),hh);
+      if(hh>=12){cx.fillStyle="#e6edf5";cx.fillText(o.q>=10?o.q.toFixed(1):o.q.toFixed(2),cx0+3,y1+hh/2+4.5)}}
     // prezzo corrente: riga grigia e ultimo scambio
     {const Ym=py(smp.mid);cx.strokeStyle="#9aa5b1";cx.lineWidth=1;cx.beginPath();cx.moveTo(cx0,Ym);cx.lineTo(cx0+L.COB,Ym);cx.stroke();cx.moveTo(0,Ym);
       const lt=TR.length?TR[TR.length-1]:null;if(lt){cx.font="bold 11px system-ui";cx.textAlign="right";cx.fillStyle=lt[3]>0?"#56e084":"#f0625c";cx.fillText((lt[2]>=1?lt[2].toFixed(2):lt[2]>=.001?lt[2].toFixed(3):lt[2].toFixed(5))+" @ "+lt[1].toFixed(1),w-4,Ym-4);cx.textAlign="left"}}
-    cx.fillStyle="#9fb0c2";cx.fillText("LIBRO",cx0+3,10)}
+    cx.fillStyle="#9fb0c2";cx.font="11px system-ui";cx.fillText("LIBRO",cx0+3,11)}
   if(cross){cx.strokeStyle="#ffffff55";cx.setLineDash([3,3]);cx.beginPath();cx.moveTo(cross.x,0);cx.lineTo(cross.x,h);cx.moveTo(0,cross.y);cx.lineTo(w,cross.y);cx.stroke();cx.setLineDash([]);
-    cx.fillStyle="#2f6f9f";cx.fillRect(w,cross.y-8,L.AX,16);cx.fillStyle="#fff";cx.font="11px system-ui";cx.fillText(yp(cross.y).toFixed(1),w+4,cross.y+4)}
+    cx.fillStyle="#2f6f9f";cx.fillRect(w,cross.y-8,L.AX,16);cx.fillStyle="#fff";cx.font="bold 12px system-ui";cx.fillText(yp(cross.y).toFixed(1),w+5,cross.y+4)}
 }
 // ---- scala prezzo: auto / fisso / libero
 function midAt(t){if(!S.length)return (v.p0+v.p1)/2;const i=Math.min(S.length-1,Math.max(0,lb(S,t,s=>s.t)-1));return S[i].mid}
@@ -205,7 +205,7 @@ cv.addEventListener("pointerdown",e=>{cv.setPointerCapture(e.pointerId);{const r
   if(ptr.size===2){const [a,b]=[...ptr.values()];pinch={dx:Math.abs(a.x-b.x)||1,dy:Math.abs(a.y-b.y)||1,v:{...v},mx:(a.x+b.x)/2,my:(a.y+b.y)/2};drag=null}});
 cv.addEventListener("pointermove",e=>{
   const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
-  if(pd_){opt.pres2=Math.min(.94,Math.max(.4,x/mw()));L.FUT=1-opt.pres2;if(S.length){const sp=v.t1-v.t0;v.t1=S[S.length-1].t+sp*L.FUT;v.t0=v.t1-sp}applyY();dirty=true;draw();return}
+  if(pd_){opt.pres3=Math.min(.95,Math.max(.6,x/mw()));L.FUT=1-opt.pres3;if(S.length){const sp=v.t1-v.t0;v.t1=S[S.length-1].t+sp*L.FUT;v.t0=v.t1-sp}applyY();dirty=true;draw();return}
   if(ax){fixH=Math.min(5000,Math.max(4,ax.H*Math.exp(-(e.clientY-ax.y)/160)));if(ym!=="fisso")setYm("fisso");applyY(true);draw();return}
   cv.style.cursor=onAx(x)&&y<pmain()?"ns-resize":(Math.abs(x-presX())<=7&&y<pmain()&&x<mw())?"ew-resize":"crosshair";if(ptr.has(e.pointerId))ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(pinch&&ptr.size>=2){const [a,b]=[...ptr.values()];const dx=Math.abs(a.x-b.x)||1,dy=Math.abs(a.y-b.y)||1;moved=9;const sx=pinch.dx/dx,vv=pinch.v,mxp=pinch.mx-r.left,myp=pinch.my-r.top;
@@ -276,6 +276,6 @@ function snapshot(){
 function cpBuild(){const n=$("cpN").value.trim();$("cpT").value=(n?"LA MIA LETTURA: "+n+"\n\n":"")+snapshot()+"\n\nRichiesta: verifica se la mia lettura è corretta; confrontala con le registrazioni (casi simili, esiti a 1/5/15 min al netto dei costi, campione e baseline) e dimmi quali condizioni vedi tu."}
 $("bC").onclick=()=>{cpBuild();$("cp").hidden=false;$("cpM").textContent=""};$("cpX").onclick=()=>{$("cp").hidden=true};$("cpN").addEventListener("input",cpBuild);
 $("cpC").onclick=async()=>{cpBuild();const t=$("cpT");try{await navigator.clipboard.writeText(t.value);$("cpM").textContent="Copiato"}catch(e){t.removeAttribute("readonly");t.select();try{document.execCommand("copy");$("cpM").textContent="Copiato"}catch(_){$("cpM").textContent="Selezionato: copia a mano"}t.setAttribute("readonly","")}};
-sync();load(window.DATI3);size();
+sync();lay();load(window.DATI3);size();
 if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script></body></html>
