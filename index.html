@@ -21,12 +21,12 @@ button:hover,select:hover{border-color:var(--acc)}button.on{background:#27506e;b
 .rw{display:flex;gap:10px;align-items:center;margin:10px 0 4px}.box small{color:var(--mut)}
 @media(max-width:640px){#top h1{display:none}}
 </style></head><body>
-<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v15</small></h1><span class="t" id="tit"></span>
+<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v16</small></h1><span class="t" id="tit"></span>
 <button id="bCa" class="on">Candele</button><select id="sTf"><option value="15000">15 s</option><option value="60000" selected>1 min</option><option value="300000">5 min</option></select>
 <button id="bNe" class="on">Sfondo nero</button><button id="bCo" title="Intensità e contrasto della mappa di calore">Colori ▾</button><button id="bBo" class="on">Bolle</button><button id="bVo" class="on">Volume</button>
 <button id="bYm" title="Scala prezzo: Auto = si adatta ai dati visibili; Fisso = altezza fissa centrata sul prezzo; Libero = la sposti tu">Prezzo: Fisso</button><button id="bY1" title="Riduci altezza (più zoom sul prezzo)">Altezza −</button><button id="bY2" title="Aumenta altezza (meno zoom sul prezzo)">Altezza +</button>
 <button id="bG1" title="Granularità più fine: righe più sottili ([)">Passo −</button><button id="bGl" title="Passo del prezzo; clic = automatico">Passo: auto</button><button id="bG2" title="Granularità più larga: righe più spesse (])">Passo +</button>
-<button id="bR">Vista intera</button><button id="bU" title="Ricentra il grafico su prezzo e ultime transazioni (tasto C)">Ricentra</button><select id="sFe" title="Sorgente dati del Live"><option value="kr">Kraken spot</option><option value="okp">OKX perp BTC-USDT</option><option value="okx">OKX X-Perp BTC-USD</option><option value="oks">OKX spot BTC-USDT</option></select><button id="bL">Live</button><button id="bC">Copia per Claude</button></div>
+<button id="bR">Vista intera</button><button id="bU" title="Ricentra il grafico su prezzo e ultime transazioni (tasto C)">Ricentra</button><select id="sFe" title="Sorgente dati del Live"><option value="kr">Kraken spot</option><option value="okp">OKX perp BTC-USDT</option><option value="okx">OKX X-Perp BTC-USD</option><option value="oks">OKX spot BTC-USDT</option></select><button id="bL">Live</button><button id="bTv" title="Apre lo stesso strumento su TradingView (nuova scheda)">TradingView ↗</button><button id="bC">Copia per Claude</button></div>
 <div id="hp" hidden><b>Mappa di calore</b><canvas id="hg" width="240" height="14"></canvas>
 <label>Luminosità <span id="vl"></span></label><input type="range" id="rl" min="40" max="220" step="5">
 <label>Contrasto <span id="vc"></span></label><input type="range" id="rc" min="50" max="300" step="5">
@@ -282,6 +282,8 @@ function liveStart(){stopWs();
     if(S.length===1||S.length%30===0){const q=[];for(const s of S.slice(-200))for(const k of s.c)q.push(k[1]);q.sort((a,b)=>a-b);if(q.length){QREF=Math.max(.05,q[q.length>>1]);QMAX=Math.max(QREF*4,q[Math.floor(q.length*.995)])}}
     if(S.length<3)fit();else if(follow){const span=v.t1-v.t0,fut=span*L.FUT;v.t1=now+fut;v.t0=v.t1-span;const c=(bb+ba)/2;if(c<v.p0+8||c>v.p1-8){const m=v.p1-v.p0;v.p0=c-m/2;v.p1=c+m/2}}
     if(ym!=="libero")applyY();dirty=true;draw()},500)}
+const TV={kr:"KRAKEN:XBTUSD",okp:"OKX:BTCUSDT.P",okx:"OKX:BTCUSDT.P",oks:"OKX:BTCUSDT"};
+$("bTv").onclick=()=>{const f=$("sFe").value,iv=({15000:"1",60000:"1",300000:"5"})[opt.tf]||"1";window.open("https://www.tradingview.com/chart/?symbol="+encodeURIComponent(TV[f])+"&interval="+iv,"_blank","noopener")};
 $("sFe").onchange=()=>{if(live)liveStart()};
 $("bL").onclick=function(){if(!live){this.classList.add("on");this.textContent="Replay";liveStart()}else{stopWs();live=false;this.classList.remove("on");this.textContent="Live";load(window.DATI3);draw()}};
 // ---- Copia per Claude
