@@ -22,7 +22,7 @@ button:hover,select:hover{border-color:var(--acc)}button.on{background:#27506e;b
 </style></head><body>
 <div id="top"><h1>Mappa liquidità</h1><span class="t" id="tit"></span>
 <button id="bCa" class="on">Candele</button><select id="sTf"><option value="15000">15 s</option><option value="60000" selected>1 min</option><option value="300000">5 min</option></select>
-<button id="bBo" class="on">Bolle</button><button id="bVo" class="on">Volume</button>
+<button id="bNe" class="on">Sfondo nero</button><button id="bBo" class="on">Bolle</button><button id="bVo" class="on">Volume</button>
 <button id="bYm" title="Scala prezzo: Auto = si adatta ai dati visibili; Fisso = altezza fissa centrata sul prezzo; Libero = la sposti tu">Prezzo: Fisso</button><button id="bY1" title="Riduci altezza (più zoom sul prezzo)">Altezza −</button><button id="bY2" title="Aumenta altezza (meno zoom sul prezzo)">Altezza +</button>
 <button id="bR">Vista intera</button><button id="bU" title="Ricentra il grafico su prezzo e ultime transazioni (tasto C)">Ricentra</button><button id="bL">Live</button><button id="bC">Copia per Claude</button></div>
 <canvas id="c"></canvas><div id="tip"></div>
@@ -38,14 +38,15 @@ const $=id=>document.getElementById(id),cv=$("c"),cx=cv.getContext("2d"),tip=$("
 const bc=document.createElement("canvas"),bx=bc.getContext("2d");
 let S=[],TR=[],CV=[],EV=[],title="",live=false,follow=true;
 let W=0,H=0,v={t0:0,t1:1,p0:0,p1:1},dirty=true,cross=null,hit=[],drag=null;
-let L={AX:50,COB:46,SVP:92,CVD:120,TAX:22,VOL:46,FUT:.12};
+let L={AX:50,COB:46,SVP:92,CVD:120,TAX:22,VOL:46,FUT:.35};
 let ym="fisso",fixH=60;
-const opt={candele:true,bolle:true,volume:true,tf:60000};
+const opt={candele:true,bolle:true,volume:true,tf:60000,nero:true};
 try{const o=JSON.parse(localStorage.getItem("mappa_opt")||"{}");Object.assign(opt,o)}catch(e){}
 function saveOpt(){try{localStorage.setItem("mappa_opt",JSON.stringify(opt))}catch(e){}}
 // ---- palette calore: fondo ardesia -> blu -> arancio -> rosso -> giallo -> bianco
-const ST=[[0,[26,32,39]],[.14,[30,52,76]],[.34,[28,100,150]],[.52,[226,134,44]],[.72,[210,52,44]],[.88,[255,225,74]],[1,[255,251,232]]];
-const PAL=[];for(let i=0;i<64;i++){const x=i/63;let a=ST[0],b=ST[ST.length-1];for(let k=0;k<ST.length-1;k++)if(x>=ST[k][0]&&x<=ST[k+1][0]){a=ST[k];b=ST[k+1];break}const f=(x-a[0])/((b[0]-a[0])||1);PAL.push("rgb("+[0,1,2].map(j=>Math.round(a[1][j]+(b[1][j]-a[1][j])*f)).join(",")+")")}
+let ST=[[0,[26,32,39]],[.14,[30,52,76]],[.34,[28,100,150]],[.52,[226,134,44]],[.72,[210,52,44]],[.88,[255,225,74]],[1,[255,251,232]]];
+const PAL=[];function buildPal(){PAL.length=0;ST[0][1]=opt.nero?[0,0,0]:[26,32,39];ST[1][1]=opt.nero?[14,34,72]:[30,52,76];for(let i=0;i<64;i++){const x=i/63;let a=ST[0],b=ST[ST.length-1];for(let k=0;k<ST.length-1;k++)if(x>=ST[k][0]&&x<=ST[k+1][0]){a=ST[k];b=ST[k+1];break}const f=(x-a[0])/((b[0]-a[0])||1);PAL.push("rgb("+[0,1,2].map(j=>Math.round(a[1][j]+(b[1][j]-a[1][j])*f)).join(",")+")")}}
+buildPal();const BG=()=>opt.nero?"#000":"#1a2027";
 let QREF=1,QMAX=20,svp=new Map(),svpMax=1;
 function prep(){
   CV=[];let c=0;svp=new Map();
@@ -62,7 +63,7 @@ const TST=[1,2,5,10,20,50,100,200,500,1e3,2e3,5e3,1e4,2e4,3e4,6e4,12e4,3e5,6e5,9
 const pd=(n,l=2)=>String(n).padStart(l,"0");
 function fmtT(t,ms){const d=new Date(t);return pd(d.getUTCHours())+":"+pd(d.getUTCMinutes())+":"+pd(d.getUTCSeconds())+(ms?"."+pd(d.getUTCMilliseconds(),3):"")}
 function fmtHM(t){const d=new Date(t);return pd(d.getUTCHours())+":"+pd(d.getUTCMinutes())}
-function lay(){const n=innerWidth<700;L.AX=n?42:50;L.COB=n?0:46;L.SVP=n?44:92;L.CVD=n?90:120}
+function lay(){const n=innerWidth<700;L.FUT=n?.3:.35;L.AX=n?42:50;L.COB=n?0:78;L.SVP=n?44:92;L.CVD=n?90:120}
 function fit(){
   if(!S.length)return;
   const last=S[S.length-1].t,span=live?150000:2400000;
@@ -82,7 +83,7 @@ function candles(){
 }
 function renderBase(){
   const x=bx,w=mw(),h=pmain();
-  x.fillStyle="#1a2027";x.fillRect(0,0,W,H);
+  x.fillStyle=BG();x.fillRect(0,0,W,H);
   x.save();x.beginPath();x.rect(0,0,w,h);x.clip();
   // heatmap
   const lq=Math.log1p(QMAX/QREF);let i0=Math.max(0,lb(S,v.t0,s=>s.t)-1);
@@ -92,7 +93,8 @@ function renderBase(){
       const y1=py(k[0]+1),y0=py(k[0]);x.fillStyle=PAL[idx];x.fillRect(xa,y1,ww,y0-y1+.6)}}
   // barre del libro "nel futuro" (libro dell'ultimo campione)
   if(S.length){const s=S[S.length-1],xf=tx(s.t)+2;if(xf<w){for(const k of s.c){if(k[0]+1<v.p0||k[0]>v.p1)continue;const idx=Math.min(63,Math.floor(Math.log1p(k[1]/QREF)/lq*63));if(idx<=1)continue;
-      const y1=py(k[0]+1),y0=py(k[0]);x.fillStyle=PAL[idx];x.fillRect(xf,y1+.5,w-xf,Math.max(1.5,y0-y1-1))}}}
+      const y1=py(k[0]+1),y0=py(k[0]);x.fillStyle=PAL[idx];const hh=Math.min(3,Math.max(1.5,y0-y1-1)),yc=(y1+y0)/2;x.fillRect(xf,yc-hh/2,w-xf,hh)}}
+    x.strokeStyle="#ffffffcc";x.lineWidth=1;x.beginPath();x.moveTo(xf-2,0);x.lineTo(xf-2,h);x.stroke()}
   // griglia verticale ogni passo di tempo
   const tr=(v.t1-v.t0)/(W<640?4:8);const step=TST.find(a=>a>=tr)||TST[TST.length-1];
   x.setLineDash([3,4]);x.strokeStyle="#ffffff22";for(let t=Math.ceil(v.t0/step)*step;t<v.t1;t+=step){const X=tx(t);x.beginPath();x.moveTo(X,0);x.lineTo(X,h);x.stroke()}x.setLineDash([]);
@@ -157,10 +159,16 @@ function draw(){
   // colonna del libro (COB): quantita' per livello, al momento del cursore (o ultimo)
   if(L.COB>0&&S.length){let smp=S[S.length-1];if(cross){const i=Math.max(0,Math.min(S.length-1,lb(S,xt(cross.x),s=>s.t)-1));if(S[i]&&xt(cross.x)<=S[S.length-1].t)smp=S[i]}
     const px=(h)/(v.p1-v.p0);const cx0=w+L.AX;cx.fillStyle="#1f262e";cx.fillRect(cx0,0,L.COB,h);cx.font="10px system-ui";
-    const bins=new Map();for(const k of smp.c){bins.set(k[0],(bins.get(k[0])||0)+k[1]);}let lastY=-99;
-    for(const [p,q] of [...bins].sort((a,b)=>b[1]-a[1])){if(p+1<v.p0||p>v.p1)continue;const Y=py(p+.5),isAsk=smp.c.some(k=>k[0]===p&&k[2]===1);
-      const idx=Math.min(63,Math.floor(Math.log1p(q/QREF)/Math.log1p(QMAX/QREF)*63));cx.fillStyle=PAL[Math.max(0,idx)];cx.globalAlpha=.55;cx.fillRect(cx0,py(p+1),Math.min(L.COB,q/QMAX*L.COB),Math.max(1,px-.5));cx.globalAlpha=1;
-      if((px>=10||q>=QMAX*.35)&&Math.abs(Y-lastY)>=10){lastY=Y;cx.fillStyle=isAsk?"#f0a3a0":"#9fe3b4";cx.fillText(q>=10?q.toFixed(1):q.toFixed(2),cx0+3,Y+3.5)}}
+    const ST_=[1,2,5,10,20,25,50,100],stp=ST_.find(a=>a*px>=13)||100;
+    const bins=new Map();for(const k of smp.c){const b=Math.floor(k[0]/stp)*stp;let o=bins.get(b);if(!o){o={q:0,a:0,b:0};bins.set(b,o)}o.q+=k[1];k[2]===1?o.a+=k[1]:o.b+=k[1]}
+    let mxq=1e-9;for(const [p,o] of bins)if(p+stp>=v.p0&&p<=v.p1)mxq=Math.max(mxq,o.q);
+    cx.font="10px ui-monospace,Consolas,monospace";
+    for(const [p,o] of bins){if(p+stp<v.p0||p>v.p1)continue;const y1=py(p+stp),y0=py(p),hh=Math.max(1,y0-y1-1),isAsk=o.a>=o.b;
+      cx.fillStyle=isAsk?"rgba(240,140,50,.85)":"rgba(70,209,123,.8)";cx.fillRect(cx0+L.COB*.42,y1+.5,Math.max(1,o.q/mxq*(L.COB*.58-2)),hh);
+      if(hh>=10){cx.fillStyle="#cfd8e2";cx.fillText(o.q>=10?o.q.toFixed(1):o.q.toFixed(2),cx0+2,y1+hh/2+3.5)}}
+    // prezzo corrente: riga grigia e ultimo scambio
+    {const Ym=py(smp.mid);cx.strokeStyle="#9aa5b1";cx.lineWidth=1;cx.beginPath();cx.moveTo(cx0,Ym);cx.lineTo(cx0+L.COB,Ym);cx.stroke();cx.moveTo(0,Ym);
+      const lt=TR.length?TR[TR.length-1]:null;if(lt){cx.font="bold 11px system-ui";cx.textAlign="right";cx.fillStyle=lt[3]>0?"#56e084":"#f0625c";cx.fillText((lt[2]>=1?lt[2].toFixed(2):lt[2]>=.001?lt[2].toFixed(3):lt[2].toFixed(5))+" @ "+lt[1].toFixed(1),w-4,Ym-4);cx.textAlign="left"}}
     cx.fillStyle="#9fb0c2";cx.fillText("LIBRO",cx0+3,10)}
   if(cross){cx.strokeStyle="#ffffff55";cx.setLineDash([3,3]);cx.beginPath();cx.moveTo(cross.x,0);cx.lineTo(cross.x,h);cx.moveTo(0,cross.y);cx.lineTo(w,cross.y);cx.stroke();cx.setLineDash([]);
     cx.fillStyle="#2f6f9f";cx.fillRect(w,cross.y-8,L.AX,16);cx.fillStyle="#fff";cx.font="11px system-ui";cx.fillText(yp(cross.y).toFixed(1),w+4,cross.y+4)}
@@ -189,26 +197,30 @@ function showTip(x,y,cxp,cyp){
   const si=Math.max(0,lb(S,t,s=>s.t)-1);if(S[si]){const bn=Math.floor(p),c=S[si].c.find(k=>k[0]===bn);txt+="\nlibro in questo $: "+(c?c[1].toFixed(2)+" BTC ("+(c[2]?"vendita":"acquisto")+")":"—")}
   for(const o of hit){if(Math.hypot(o.x-x,o.y-y)<=Math.max(o.r,12)){txt+="\n— bolla: "+o.c.q.toFixed(3)+" BTC, "+(o.c.s>0?"acquisto":"vendita")+" aggressiva, "+o.c.n+" trade";break}}
   tip.textContent=txt;tip.style.display="block";tip.style.left=Math.max(4,Math.min(cxp+14,innerWidth-250))+"px";tip.style.top=Math.max(48,Math.min(cyp+14,innerHeight-110))+"px"}
-cv.addEventListener("pointerdown",e=>{cv.setPointerCapture(e.pointerId);ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});moved=0;
+let ax=null;const onAx=x=>x>mw()&&x<=mw()+L.AX;
+cv.addEventListener("pointerdown",e=>{cv.setPointerCapture(e.pointerId);{const r0=cv.getBoundingClientRect();if(e.pointerType!=="touch"||true){const x0=e.clientX-r0.left,y0=e.clientY-r0.top;if(onAx(x0)&&y0<pmain()){ax={y:e.clientY,H:v.p1-v.p0};ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});return}}}ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});moved=0;
   if(ptr.size===1)drag={x:e.clientX,y:e.clientY,v:{...v}};
   if(ptr.size===2){const [a,b]=[...ptr.values()];pinch={dx:Math.abs(a.x-b.x)||1,dy:Math.abs(a.y-b.y)||1,v:{...v},mx:(a.x+b.x)/2,my:(a.y+b.y)/2};drag=null}});
 cv.addEventListener("pointermove",e=>{
-  const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;if(ptr.has(e.pointerId))ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+  if(ax){fixH=Math.min(5000,Math.max(4,ax.H*Math.exp(-(e.clientY-ax.y)/160)));if(ym!=="fisso")setYm("fisso");applyY(true);draw();return}
+  cv.style.cursor=onAx(x)&&y<pmain()?"ns-resize":"crosshair";if(ptr.has(e.pointerId))ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(pinch&&ptr.size>=2){const [a,b]=[...ptr.values()];const dx=Math.abs(a.x-b.x)||1,dy=Math.abs(a.y-b.y)||1;moved=9;const sx=pinch.dx/dx,vv=pinch.v,mxp=pinch.mx-r.left,myp=pinch.my-r.top;
     const t=vv.t0+mxp/mw()*(vv.t1-vv.t0);v.t0=t-(t-vv.t0)*sx;v.t1=t+(vv.t1-t)*sx;
     if(Math.abs(a.y-b.y)>40||dy>dx){const sy=pinch.dy/dy,p=vv.p0+(pmain()-myp)/pmain()*(vv.p1-vv.p0);if(ym==="libero"){v.p0=p-(p-vv.p0)*sy;v.p1=p+(vv.p1-p)*sy}else{fixH=Math.max(4,(vv.p1-vv.p0)*sy);if(ym!=="fisso")setYm("fisso")}}applyY();dirty=true;setFollow();draw();return}
   if(drag&&ptr.size===1&&(e.buttons||e.pointerType==="touch")){const mdx=e.clientX-drag.x,mdy=e.clientY-drag.y;moved=Math.max(moved,Math.hypot(mdx,mdy));
     const dx=mdx/mw()*(drag.v.t1-drag.v.t0),dy=mdy/pmain()*(drag.v.p1-drag.v.p0);v.t0=drag.v.t0-dx;v.t1=drag.v.t1-dx;if(ym!=="libero"&&Math.abs(mdy)>8){ym="libero";$("bYm").textContent="Prezzo: Libero"}if(ym==="libero"){v.p0=drag.v.p0+dy;v.p1=drag.v.p1+dy}else applyY();setFollow();dirty=true;draw();return}
   if(e.pointerType==="mouse")showTip(x,y,e.clientX,e.clientY)});
-function up(e){const r=cv.getBoundingClientRect(),was=ptr.size;ptr.delete(e.pointerId);if(ptr.size<2)pinch=null;
+function up(e){if(ax){ax=null;ptr.delete(e.pointerId);return}const r=cv.getBoundingClientRect(),was=ptr.size;ptr.delete(e.pointerId);if(ptr.size<2)pinch=null;
   if(ptr.size===0){drag=null;if(e.pointerType==="touch"&&moved<8&&was===1){const now=Date.now();if(now-lastTap<320){fit();draw();tip.style.display="none"}else showTip(e.clientX-r.left,e.clientY-r.top,e.clientX,e.clientY);lastTap=now}}
   else if(ptr.size===1){const [a]=[...ptr.values()];drag={x:a.x,y:a.y,v:{...v}}}}
 cv.addEventListener("pointerup",up);cv.addEventListener("pointercancel",up);
 cv.addEventListener("dblclick",()=>{fit();draw()});
 cv.addEventListener("pointerleave",e=>{if(e.pointerType==="mouse"){cross=null;tip.style.display="none";draw()}});
 // ---- pulsanti
-function sync(){$("bCa").classList.toggle("on",opt.candele);$("bBo").classList.toggle("on",opt.bolle);$("bVo").classList.toggle("on",opt.volume);$("sTf").value=String(opt.tf)}
+function sync(){$("bCa").classList.toggle("on",opt.candele);$("bBo").classList.toggle("on",opt.bolle);$("bNe").classList.toggle("on",opt.nero);$("bVo").classList.toggle("on",opt.volume);$("sTf").value=String(opt.tf)}
 $("bCa").onclick=()=>{opt.candele=!opt.candele;saveOpt();sync();dirty=true;draw()};
+$("bNe").onclick=()=>{opt.nero=!opt.nero;buildPal();saveOpt();sync();dirty=true;draw()};
 $("bBo").onclick=()=>{opt.bolle=!opt.bolle;saveOpt();sync();dirty=true;draw()};
 $("bVo").onclick=()=>{opt.volume=!opt.volume;saveOpt();sync();dirty=true;draw()};
 $("sTf").onchange=e=>{opt.tf=+e.target.value;saveOpt();dirty=true;draw()};
