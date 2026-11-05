@@ -6,12 +6,12 @@
 <style>
 :root{--bg:#1a2027;--panel:#232b34;--ln:#33404d;--fg:#d9e0e8;--mut:#8b9aab;--buy:#46d17b;--sell:#e5605a;--acc:#7cc4ff}
 *{box-sizing:border-box}html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font:13px/1.35 system-ui,Segoe UI,Roboto,sans-serif;overflow:hidden}
-#top{min-height:40px;display:flex;align-items:center;gap:6px;padding:4px 10px;background:var(--panel);border-bottom:1px solid var(--ln);flex-wrap:wrap}
+#top{min-height:40px;flex:none;display:flex;align-items:center;gap:5px;padding:4px 8px;background:var(--panel);border-bottom:1px solid var(--ln);flex-wrap:wrap}
 #top h1{font-size:14px;margin:0 6px 0 0;font-weight:600}
 #top .t{color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:80px}
-button,select{background:#2b3641;color:var(--fg);border:1px solid var(--ln);border-radius:6px;padding:5px 9px;font:inherit;cursor:pointer}
+button,select{background:#2b3641;color:var(--fg);border:1px solid var(--ln);border-radius:6px;padding:4px 7px;white-space:nowrap;font:inherit;cursor:pointer}
 button:hover,select:hover{border-color:var(--acc)}button.on{background:#27506e;border-color:var(--acc)}
-#c{touch-action:none;display:block;width:100%;height:calc(100% - 42px);cursor:crosshair}
+body{display:flex;flex-direction:column}#c{touch-action:none;display:block;width:100%;flex:1 1 0;min-height:0;cursor:crosshair}
 #hp{position:fixed;top:46px;right:10px;z-index:8;background:var(--panel);border:1px solid var(--ln);border-radius:10px;padding:10px 12px;width:270px;box-shadow:0 6px 24px #000a}#hp[hidden]{display:none}#hp label{display:block;color:var(--mut);font-size:12px;margin:8px 0 2px}#hp input{width:100%}#hp canvas{display:block;width:100%;height:14px;margin:6px 0;border-radius:3px}
 #tip{position:fixed;pointer-events:none;background:#12171cee;border:1px solid var(--ln);border-radius:6px;padding:6px 8px;font-size:12px;display:none;white-space:pre;z-index:5}
 #cp{position:fixed;inset:0;background:#000a;z-index:9;display:flex;align-items:flex-end;justify-content:center}#cp[hidden]{display:none}
@@ -21,7 +21,7 @@ button:hover,select:hover{border-color:var(--acc)}button.on{background:#27506e;b
 .rw{display:flex;gap:10px;align-items:center;margin:10px 0 4px}.box small{color:var(--mut)}
 @media(max-width:640px){#top h1{display:none}}
 </style></head><body>
-<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v16</small></h1><span class="t" id="tit"></span>
+<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v17</small></h1><span class="t" id="tit"></span>
 <button id="bCa" class="on">Candele</button><select id="sTf"><option value="15000">15 s</option><option value="60000" selected>1 min</option><option value="300000">5 min</option></select>
 <button id="bNe" class="on">Sfondo nero</button><button id="bCo" title="Intensità e contrasto della mappa di calore">Colori ▾</button><button id="bBo" class="on">Bolle</button><button id="bVo" class="on">Volume</button>
 <button id="bYm" title="Scala prezzo: Auto = si adatta ai dati visibili; Fisso = altezza fissa centrata sul prezzo; Libero = la sposti tu">Prezzo: Fisso</button><button id="bY1" title="Riduci altezza (più zoom sul prezzo)">Altezza −</button><button id="bY2" title="Aumenta altezza (meno zoom sul prezzo)">Altezza +</button>
