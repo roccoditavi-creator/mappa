@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0d1117"><link rel="icon" href="icon-192.png"><meta name="mobile-web-app-capable" content="yes">
+<title>Mappa liquidità NEXUS</title>
+<style>
+:root{--bg:#0d1117;--panel:#141a23;--ln:#273142;--fg:#d6dde8;--mut:#8493a8;--buy:#3ddc97;--sell:#ff5d73;--acc:#7cc4ff}
+*{box-sizing:border-box}html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font:13px/1.35 system-ui,Segoe UI,Roboto,sans-serif;overflow:hidden}
+#top{height:42px;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--panel);border-bottom:1px solid var(--ln)}
+#top h1{font-size:14px;margin:0 8px 0 0;font-weight:600;letter-spacing:.02em}
+#top .t{color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+button{background:#1c2533;color:var(--fg);border:1px solid var(--ln);border-radius:6px;padding:5px 10px;font:inherit;cursor:pointer}
+button:hover{border-color:var(--acc)}button.on{background:#1d3a52;border-color:var(--acc)}
+#c{touch-action:none;display:block;width:100%;height:calc(100% - 42px);cursor:crosshair}
+#tip{position:fixed;pointer-events:none;background:#0b0f14ee;border:1px solid var(--ln);border-radius:6px;padding:6px 8px;font-size:12px;display:none;white-space:pre;z-index:5}
+#leg{position:fixed;left:12px;bottom:112px;font-size:11px;color:var(--mut);background:#0d1117cc;padding:4px 8px;border-radius:6px;pointer-events:none}
+@media(max-width:640px){#top{padding:0 8px;gap:6px}#top h1{display:none}#leg{display:none}button{padding:6px 9px}}#cp{position:fixed;inset:0;background:#000a;z-index:9;display:flex;align-items:flex-end;justify-content:center}#cp[hidden]{display:none}.box{background:var(--panel);border:1px solid var(--ln);border-radius:12px 12px 0 0;padding:12px;width:min(720px,100%);max-height:92%;overflow:auto}.hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.box label{display:block;color:var(--mut);font-size:12px;margin:8px 0 4px}.box textarea{width:100%;background:#0b0f14;color:var(--fg);border:1px solid var(--ln);border-radius:8px;padding:8px;font:12px/1.4 ui-monospace,Consolas,monospace}.rw{display:flex;gap:10px;align-items:center;margin:10px 0 4px}.box small{color:var(--mut)}</style></head><body>
+<div id="top"><h1>Mappa liquidità</h1><span class="t" id="tit"></span>
+<button id="bR">Vista intera</button><button id="bL">Live</button><button id="bC">Copia per Claude</button></div>
+<canvas id="c"></canvas><div id="tip"></div>
+<div id="cp" hidden><div class="box"><div class="hd"><b>Copia per Claude</b><button id="cpX">Chiudi</button></div>
+<label>La tua lettura (cosa vedi e cosa pensi)</label><textarea id="cpN" rows="4" placeholder="es. muro grosso sull'ask, poco volume sotto, secondo me spinge giù; vorrei capire se regge"></textarea>
+<label>Testo pronto da incollare nella chat (dati della finestra visibile)</label><textarea id="cpT" rows="9" readonly></textarea>
+<div class="rw"><button id="cpC" class="on">Copia tutto</button><span id="cpM"></span></div>
+<small>Poi incolla nella chat con Claude e aggiungi lo screenshot della mappa.</small></div></div>
+<div id="leg">rotella/pizzico: zoom tempo · Maiusc+rotella o pizzico verticale: zoom prezzo · trascina: sposta · doppio clic/tocco: vista intera</div>
+<script src="dati_sweep.js"></script>
+<script>
+"use strict";
+const cv=document.getElementById("c"),cx=cv.getContext("2d"),tip=document.getElementById("tip");
+let S=[],TR=[],CV=[],EV=[],title="";
+let PW=112,AX=58,CVH=92,TAX=22;
+function lay(){const n=innerWidth<640;PW=n?54:112;AX=n?44:58;CVH=n?70:92;TAX=22}
+let W=0,H=0,v={t0:0,t1:1,p0:0,p1:1},live=false;
+// palette propria: grafite -> indaco -> ciano -> lime -> bianco
+const STOPS=[[0,[13,17,23]],[.18,[30,36,86]],[.42,[24,96,150]],[.65,[40,180,170]],[.85,[190,235,90]],[1,[255,255,235]]];
+const PAL=[];for(let i=0;i<64;i++){const x=i/63;let a=STOPS[0],b=STOPS[STOPS.length-1];for(let k=0;k<STOPS.length-1;k++)if(x>=STOPS[k][0]&&x<=STOPS[k+1][0]){a=STOPS[k];b=STOPS[k+1];break}const f=(x-a[0])/((b[0]-a[0])||1);PAL.push("rgb("+[0,1,2].map(j=>Math.round(a[1][j]+(b[1][j]-a[1][j])*f)).join(",")+")")}
+let QREF=1,QMAX=20;
+function prep(){
+  CV=[];let c=0;for(const t of TR){c+=t[3]*t[2];CV.push(c)}
+  const q=[];for(const s of S)for(const k of s.c)q.push(k[1]);q.sort((a,b)=>a-b);
+  if(q.length){QREF=Math.max(.05,q[Math.floor(q.length*.5)]);QMAX=Math.max(QREF*4,q[Math.floor(q.length*.995)])}
+}
+function fit(){
+  if(!S.length)return;
+  v.t0=S[0].t;v.t1=S[S.length-1].t+500;
+  let lo=1e12,hi=0;for(const t of TR){if(t[1]<lo)lo=t[1];if(t[1]>hi)hi=t[1]}
+  if(!TR.length){lo=S[0].mid-40;hi=S[0].mid+40}
+  const pad=Math.max(8,(hi-lo)*.15);v.p0=lo-pad;v.p1=hi+pad;
+}
+function size(){lay();const r=window.devicePixelRatio||1;W=cv.clientWidth;H=cv.clientHeight;cv.width=W*r;cv.height=H*r;cx.setTransform(r,0,0,r,0,0);draw()}
+const pw=()=>W-PW-AX, ph=()=>H-CVH-TAX;
+const tx=t=>(t-v.t0)/(v.t1-v.t0)*pw(), py=p=>ph()-(p-v.p0)/(v.p1-v.p0)*ph();
+const xt=x=>v.t0+x/pw()*(v.t1-v.t0), yp=y=>v.p0+(ph()-y)/ph()*(v.p1-v.p0);
+function lb(arr,t,f){let a=0,b=arr.length;while(a<b){const m=(a+b)>>1;if(f(arr[m])<t)a=m+1;else b=m}return a}
+function nice(span,n){const r=span/n,p=Math.pow(10,Math.floor(Math.log10(r))),m=r/p;return (m<1.5?1:m<3.5?2:m<7.5?5:10)*p}
+const TST=[1,2,5,10,20,50,100,200,500,1e3,2e3,5e3,1e4,2e4,3e4,6e4,12e4,3e5,6e5,18e5,36e5];
+function fmtT(t,ms){const d=new Date(t),p=(n,l=2)=>String(n).padStart(l,"0");return p(d.getUTCHours())+":"+p(d.getUTCMinutes())+":"+p(d.getUTCSeconds())+(ms?"."+p(d.getUTCMilliseconds(),3):"")}
+function draw(){
+  if(!W)return;
+  cx.fillStyle="#0d1117";cx.fillRect(0,0,W,H);
+  const w=pw(),h=ph();
+  // ---- heatmap
+  cx.save();cx.beginPath();cx.rect(0,0,w,h);cx.clip();cx.fillStyle=PAL[0];cx.fillRect(0,0,w,h);
+  const lq=Math.log1p(QMAX/QREF);
+  let i0=Math.max(0,lb(S,v.t0,s=>s.t)-1);
+  for(let i=i0;i<S.length;i++){
+    const s=S[i];if(s.t>v.t1)break;
+    const xa=tx(s.t),xb=tx(i+1<S.length?S[i+1].t:s.t+500),ww=Math.max(1,xb-xa+.6);
+    for(const k of s.c){
+      if(k[0]+1<v.p0||k[0]>v.p1)continue;
+      const y1=py(k[0]+1),y0=py(k[0]);
+      const idx=Math.min(63,Math.floor(Math.log1p(k[1]/QREF)/lq*63));
+      if(idx<=0)continue;
+      cx.fillStyle=PAL[idx];cx.fillRect(xa,y1,ww,y0-y1+.6);
+    }
+  }
+  // mid
+  cx.strokeStyle="#ffffffaa";cx.lineWidth=1;cx.beginPath();let st=false;
+  for(let i=i0;i<S.length;i++){const s=S[i];if(s.t>v.t1+2000)break;const x=tx(s.t),y=py(s.mid);if(!st){cx.moveTo(x,y);st=true}else cx.lineTo(x,y)}
+  cx.stroke();
+  // eventi
+  for(const e of EV){const x=tx(e[0]);if(x<0||x>w)continue;cx.strokeStyle="#ffd166";cx.setLineDash([4,4]);cx.beginPath();cx.moveTo(x,0);cx.lineTo(x,h);cx.stroke();cx.setLineDash([]);cx.fillStyle="#ffd166";cx.font="11px system-ui";cx.fillText(e[1],Math.min(x+5,w-190),14)}
+  // ---- bolle raggruppate per zoom
+  const GX=20,GY=16,cl=new Map();
+  let j0=lb(TR,v.t0,t=>t[0]);
+  for(let j=j0;j<TR.length;j++){
+    const t=TR[j];if(t[0]>v.t1)break;if(t[1]<v.p0||t[1]>v.p1)continue;
+    const x=tx(t[0]),y=py(t[1]),key=Math.floor(x/GX)+"|"+Math.floor(y/GY)+"|"+t[3];
+    let c=cl.get(key);if(!c){c={q:0,qp:0,qt:0,n:0,s:t[3]};cl.set(key,c)}
+    c.q+=t[2];c.qp+=t[2]*t[1];c.qt+=t[2]*t[0];c.n++;
+  }
+  hit=[];
+  for(const c of cl.values()){
+    if(c.q<=0)continue;
+    const x=tx(c.qt/c.q),y=py(c.qp/c.q),r=Math.min(38,2+3.6*Math.log1p(c.q/.03));
+    cx.fillStyle=c.s>0?"rgba(61,220,151,.38)":"rgba(255,93,115,.38)";cx.strokeStyle=c.s>0?"#3ddc97":"#ff5d73";cx.lineWidth=c.n>1?1.6:1;
+    cx.beginPath();cx.arc(x,y,r,0,6.2832);cx.fill();cx.stroke();
+    if(r>13){cx.fillStyle="#fff";cx.font="11px system-ui";cx.textAlign="center";cx.fillText(c.q>=10?c.q.toFixed(0):c.q.toFixed(1),x,y+4);cx.textAlign="left"}
+    hit.push({x,y,r,c});
+  }
+  cx.restore();
+  // ---- profilo del volume nella finestra visibile
+  const bins=new Map();let mx=0;
+  for(let j=j0;j<TR.length;j++){const t=TR[j];if(t[0]>v.t1)break;const b=Math.floor(t[1]);let o=bins.get(b);if(!o){o={b:0,s:0};bins.set(b,o)}if(t[3]>0)o.b+=t[2];else o.s+=t[2];mx=Math.max(mx,o.b+o.s)}
+  cx.save();cx.beginPath();cx.rect(w,0,PW,h);cx.clip();cx.fillStyle="#10151d";cx.fillRect(w,0,PW,h);
+  let poc=-1,pm=0;
+  for(const [b,o] of bins){const y1=py(b+1),y0=py(b),hh=Math.max(1,y0-y1-.5),tot=o.b+o.s;if(tot>pm){pm=tot;poc=b}
+    const wb=o.b/mx*(PW-8),ws=o.s/mx*(PW-8);cx.fillStyle="#3ddc9799";cx.fillRect(w+2,y1,wb,hh);cx.fillStyle="#ff5d7399";cx.fillRect(w+2+wb,y1,ws,hh)}
+  if(poc>=0){cx.strokeStyle="#ffd166";cx.beginPath();cx.moveTo(w,py(poc+.5));cx.lineTo(w+PW,py(poc+.5));cx.stroke()}
+  cx.restore();
+  // ---- asse prezzi
+  cx.fillStyle="#11161e";cx.fillRect(w+PW,0,AX,h);cx.fillStyle="#8493a8";cx.font="11px system-ui";
+  const ps=nice(v.p1-v.p0,10);for(let p=Math.ceil(v.p0/ps)*ps;p<v.p1;p+=ps){const y=py(p);cx.fillText(p.toFixed(ps<1?1:0),w+PW+6,y+4);cx.strokeStyle="#ffffff0f";cx.beginPath();cx.moveTo(0,y);cx.lineTo(w,y);cx.stroke()}
+  // ---- CVD
+  const cy0=h,ch=CVH;cx.fillStyle="#10151d";cx.fillRect(0,cy0,w,ch);
+  let k0=Math.max(0,lb(TR,v.t0,t=>t[0])-1),lo=1e18,hi=-1e18;
+  for(let j=k0;j<TR.length&&TR[j][0]<=v.t1;j++){lo=Math.min(lo,CV[j]);hi=Math.max(hi,CV[j])}
+  if(hi>lo){cx.strokeStyle="#7cc4ff";cx.lineWidth=1.3;cx.beginPath();for(let j=k0;j<TR.length&&TR[j][0]<=v.t1;j++){const x=tx(TR[j][0]),y=cy0+ch-6-(CV[j]-lo)/(hi-lo)*(ch-14);j==k0?cx.moveTo(x,y):cx.lineTo(x,y)}cx.stroke()}
+  cx.fillStyle="#8493a8";cx.font="11px system-ui";cx.fillText("CVD (acquisti − vendite aggressive, BTC)  "+(hi>lo?lo.toFixed(1)+" … "+hi.toFixed(1):""),6,cy0+13);
+  // ---- asse tempo
+  cx.fillStyle="#11161e";cx.fillRect(0,cy0+ch,w+PW+AX,TAX);cx.fillStyle="#8493a8";
+  const tr=(v.t1-v.t0)/(W<640?4:8);let step=TST.find(x=>x>=tr)||TST[TST.length-1];
+  for(let t=Math.ceil(v.t0/step)*step;t<v.t1;t+=step){const x=tx(t);cx.fillText(fmtT(t,step<1000),x-(step<1000?30:20),cy0+ch+15);cx.strokeStyle="#ffffff10";cx.beginPath();cx.moveTo(x,0);cx.lineTo(x,cy0+ch);cx.stroke()}
+  if(cross){cx.strokeStyle="#ffffff44";cx.setLineDash([3,3]);cx.beginPath();cx.moveTo(cross.x,0);cx.lineTo(cross.x,h);cx.moveTo(0,cross.y);cx.lineTo(w,cross.y);cx.stroke();cx.setLineDash([])}
+}
+let hit=[],cross=null,drag=null;
+function zoomT(f,x){const t=xt(x);v.t0=t-(t-v.t0)*f;v.t1=t+(v.t1-t)*f;if(v.t1-v.t0<30){const m=(v.t0+v.t1)/2;v.t0=m-15;v.t1=m+15}}
+function zoomP(f,y){const p=yp(y);v.p0=p-(p-v.p0)*f;v.p1=p+(v.p1-p)*f;if(v.p1-v.p0<1.5){const m=(v.p0+v.p1)/2;v.p0=m-.75;v.p1=m+.75}}
+cv.addEventListener("wheel",e=>{e.preventDefault();const r=cv.getBoundingClientRect(),f=e.deltaY>0?1.18:1/1.18;e.shiftKey?zoomP(f,e.clientY-r.top):zoomT(f,e.clientX-r.left);draw()},{passive:false});
+const ptr=new Map();let pinch=null,moved=0,lastTap=0;
+function showTip(x,y,cxp,cyp){
+  if(x>pw()||y>ph()){cross=null;tip.style.display="none";draw();return}
+  cross={x,y};draw();
+  const t=xt(x),p=yp(y);let txt=fmtT(t,true)+" UTC\nprezzo "+p.toFixed(1);
+  const si=Math.max(0,lb(S,t,s=>s.t)-1);if(S[si]){const bn=Math.floor(p);const c=S[si].c.find(k=>k[0]===bn);txt+="\nlibro in questo $: "+(c?c[1].toFixed(2)+" BTC ("+(c[2]?"vendita":"acquisto")+")":"—")}
+  for(const o of hit){if(Math.hypot(o.x-x,o.y-y)<=Math.max(o.r,12)){txt+="\n— bolla: "+o.c.q.toFixed(3)+" BTC, "+(o.c.s>0?"acquisto":"vendita")+" aggressiva, "+o.c.n+" trade";break}}
+  tip.textContent=txt;tip.style.display="block";tip.style.left=Math.max(4,Math.min(cxp+14,innerWidth-250))+"px";tip.style.top=Math.max(48,Math.min(cyp+14,innerHeight-110))+"px"}
+cv.addEventListener("pointerdown",e=>{cv.setPointerCapture(e.pointerId);ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});moved=0;
+  if(ptr.size===1)drag={x:e.clientX,y:e.clientY,v:{...v}};
+  if(ptr.size===2){const [a,b]=[...ptr.values()];pinch={dx:Math.abs(a.x-b.x)||1,dy:Math.abs(a.y-b.y)||1,v:{...v},mx:(a.x+b.x)/2,my:(a.y+b.y)/2};drag=null}});
+cv.addEventListener("pointermove",e=>{
+  const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+  if(ptr.has(e.pointerId))ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pinch&&ptr.size>=2){const [a,b]=[...ptr.values()];const dx=Math.abs(a.x-b.x)||1,dy=Math.abs(a.y-b.y)||1;moved=9;
+    const sx=pinch.dx/dx,vv=pinch.v,mx=pinch.mx-r.left,my=pinch.my-r.top;
+    const t=vv.t0+mx/pw()*(vv.t1-vv.t0);v.t0=t-(t-vv.t0)*sx;v.t1=t+(vv.t1-t)*sx;
+    if(Math.abs(a.y-b.y)>40||dy>dx){const sy=pinch.dy/dy,p=vv.p0+(ph()-my)/ph()*(vv.p1-vv.p0);v.p0=p-(p-vv.p0)*sy;v.p1=p+(vv.p1-p)*sy}
+    draw();return}
+  if(drag&&ptr.size===1&&(e.buttons||e.pointerType==="touch")){const mdx=e.clientX-drag.x,mdy=e.clientY-drag.y;moved=Math.max(moved,Math.hypot(mdx,mdy));
+    const dx=mdx/pw()*(drag.v.t1-drag.v.t0),dy=mdy/ph()*(drag.v.p1-drag.v.p0);v.t0=drag.v.t0-dx;v.t1=drag.v.t1-dx;v.p0=drag.v.p0+dy;v.p1=drag.v.p1+dy;follow=false;draw();return}
+  if(e.pointerType==="mouse")showTip(x,y,e.clientX,e.clientY)});
+function up(e){const r=cv.getBoundingClientRect();const was=ptr.size;ptr.delete(e.pointerId);if(ptr.size<2)pinch=null;if(ptr.size===0){drag=null;
+  if(e.pointerType==="touch"&&moved<8&&was===1){const now=Date.now();if(now-lastTap<320){fit();follow=true;draw();tip.style.display="none"}else showTip(e.clientX-r.left,e.clientY-r.top,e.clientX,e.clientY);lastTap=now}}else if(ptr.size===1){const [a]=[...ptr.values()];drag={x:a.x,y:a.y,v:{...v}}}}
+cv.addEventListener("pointerup",up);cv.addEventListener("pointercancel",up);
+cv.addEventListener("dblclick",()=>{fit();follow=true;draw()});
+cv.addEventListener("pointerleave",e=>{if(e.pointerType==="mouse"){cross=null;tip.style.display="none";draw()}});
+document.getElementById("bR").onclick=()=>{fit();draw()};
+window.addEventListener("resize",size);
+// ---- caricamento replay
+function load(d){S=d.samples.map(s=>({t:s[0],mid:s[1],c:s[2]}));TR=d.trades;EV=d.eventi||[];title=d.titolo;document.getElementById("tit").textContent=title;prep();fit()}
+// ---- modalita' live (feed pubblico Kraken v2, nessuna chiave)
+let follow=true,ws=null,bids=new Map(),asks=new Map(),timer=null;
+function liveStart(){
+  S=[];TR=[];CV=[];EV=[];bids.clear();asks.clear();live=true;title="LIVE Kraken BTC/USD (libro 100 livelli)";document.getElementById("tit").textContent=title;
+  ws=new WebSocket("wss://ws.kraken.com/v2");
+  ws.onopen=()=>{ws.send(JSON.stringify({method:"subscribe",params:{channel:"book",symbol:["BTC/USD"],depth:100}}));ws.send(JSON.stringify({method:"subscribe",params:{channel:"trade",symbol:["BTC/USD"]}}))};
+  ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.channel==="book"&&m.data){for(const d of m.data){if(m.type==="snapshot"){bids.clear();asks.clear()}
+      for(const p of d.bids){p.qty===0?bids.delete(p.price):bids.set(p.price,p.qty)}for(const p of d.asks){p.qty===0?asks.delete(p.price):asks.set(p.price,p.qty)}}
+      const ba=Math.min(...asks.keys()),bb=Math.max(...bids.keys());for(const k of [...asks.keys()])if(k<=bb)asks.delete(k);for(const k of [...bids.keys()])if(k>=ba)bids.delete(k)}
+    else if(m.channel==="trade"&&m.data){for(const x of m.data){TR.push([Date.parse(x.timestamp),x.price,x.qty,x.side==="buy"?1:-1]);CV.push((CV.length?CV[CV.length-1]:0)+(x.side==="buy"?1:-1)*x.qty)}}};
+  ws.onclose=()=>{clearInterval(timer)};
+  timer=setInterval(()=>{if(!bids.size||!asks.size)return;const bb=Math.max(...bids.keys()),ba=Math.min(...asks.keys()),cells=new Map();
+    for(const [p,q] of bids)if(p>=bb-150){const k=Math.floor(p)+"b";const o=cells.get(k)||[Math.floor(p),0,0];o[1]+=q;cells.set(k,o)}
+    for(const [p,q] of asks)if(p<=ba+150){const k=Math.floor(p)+"a";const o=cells.get(k)||[Math.floor(p),0,1];o[1]+=q;cells.set(k,o)}
+    const now=Date.now();S.push({t:now,mid:(bb+ba)/2,c:[...cells.values()].map(o=>[o[0],+o[1].toFixed(2),o[2]])});
+    if(S.length>4000){S.shift()}while(TR.length&&TR[0][0]<S[0].t-60000){TR.shift();CV.shift()}
+    QMAX=Math.max(QMAX,1);if(S.length===1||S.length%20===0)prep2();
+    const span=v.t1-v.t0;if(S.length<3){v.t0=now-120000;v.t1=now+5000;v.p0=bb-35;v.p1=ba+35}else if(v.t1>=now-6000||follow){v.t1=now+3000;v.t0=v.t1-span;const c=(bb+ba)/2;if(c<v.p0+8||c>v.p1-8){const m=v.p1-v.p0;v.p0=c-m/2;v.p1=c+m/2}}
+    draw()},500)}
+function prep2(){const q=[];for(const s of S.slice(-200))for(const k of s.c)q.push(k[1]);q.sort((a,b)=>a-b);if(q.length){QREF=Math.max(.05,q[q.length>>1]);QMAX=Math.max(QREF*4,q[Math.floor(q.length*.995)])}}
+document.getElementById("bL").onclick=function(){if(!live){this.classList.add("on");this.textContent="Replay";liveStart()}else{if(ws)ws.close();clearInterval(timer);live=false;this.classList.remove("on");this.textContent="Live";load(window.DATI);draw()}};
+
+// ---- Copia per Claude: fotografia testuale della finestra visibile
+function snapshot(){
+  const f1=x=>x.toFixed(1),f2=x=>x.toFixed(2);
+  const j0=lb(TR,v.t0,t=>t[0]);let j1=j0;while(j1<TR.length&&TR[j1][0]<=v.t1)j1++;
+  const tr=TR.slice(j0,j1);let bv=0,sv=0,hi=-1e18,lo=1e18;for(const t of tr){t[3]>0?bv+=t[2]:sv+=t[2];hi=Math.max(hi,t[1]);lo=Math.min(lo,t[1])}
+  const L=[];L.push("DATI DALLA MAPPA NEXUS (BTC/USD Kraken spot, libro 100 livelli) — "+(live?"LIVE":"REPLAY")+" — "+title);
+  L.push("Finestra visibile: "+fmtT(v.t0,true)+" → "+fmtT(v.t1,true)+" UTC ("+((v.t1-v.t0)/1000).toFixed(1)+" s); prezzo visibile "+f1(v.p0)+" – "+f1(v.p1));
+  const iA=Math.max(0,lb(S,v.t0,s=>s.t)),iB=Math.min(S.length-1,Math.max(0,lb(S,v.t1,s=>s.t)-1));
+  if(tr.length){L.push("Trade nella finestra: "+tr.length+" | acquisti aggressivi "+f2(bv)+" BTC, vendite aggressive "+f2(sv)+" BTC, delta "+f2(bv-sv)+" BTC | prezzo trade: primo "+f1(tr[0][1])+", ultimo "+f1(tr[tr.length-1][1])+", max "+f1(hi)+", min "+f1(lo))}
+  else L.push("Nessun trade nella finestra visibile.");
+  const walls=(smp)=>{if(!smp)return"n/d";const mid=smp.mid,cs=smp.c.filter(k=>Math.abs(k[0]-mid)<=60).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    let bq=0,aq=0;for(const k of smp.c){if(Math.abs(k[0]-mid)<=30){k[2]?aq+=k[1]:bq+=k[1]}}
+    return "mid "+f1(mid)+"; liquidità entro 30$: bid "+f1(bq)+" BTC, ask "+f1(aq)+" BTC (sbilanciamento bid/(bid+ask) "+(bq+aq>0?(100*bq/(bq+aq)).toFixed(0):"-")+"%); livelli più grossi entro 60$: "+(cs.length?cs.map(k=>(k[2]?"ask ":"bid ")+k[0]+" ("+f1(k[1])+" BTC)").join(", "):"nessuno")};
+  if(S.length){L.push("Libro all'inizio finestra: "+walls(S[iA]));L.push("Libro alla fine finestra:  "+walls(S[iB]));
+    // livelli grossi (>=5 BTC entro 60$) presenti all'inizio e spariti alla fine
+    const fin=new Set(S[iB].c.map(k=>k[0]+"|"+k[2])),gone=S[iA].c.filter(k=>k[1]>=5&&Math.abs(k[0]-S[iA].mid)<=60&&!fin.has(k[0]+"|"+k[2]));
+    if(gone.length)L.push("Livelli ≥5 BTC presenti all'inizio e non più presenti alla fine (consumati o ritirati, non distinguibili da qui): "+gone.slice(0,6).map(k=>(k[2]?"ask ":"bid ")+k[0]+" ("+f1(k[1])+" BTC)").join(", "))}
+  const bub=hit.map(o=>o.c).sort((a,b)=>b.q-a.q).slice(0,8);
+  if(bub.length)L.push("Bolle più grosse visibili (raggruppate allo zoom corrente): "+bub.map(c=>fmtT(c.qt/c.q,true)+" "+f1(c.qp/c.q)+" "+(c.s>0?"acquisto":"vendita")+" "+f2(c.q)+" BTC ("+c.n+" trade)").join(" ; "));
+  const bins=new Map();for(const t of tr){const b=Math.floor(t[1]);bins.set(b,(bins.get(b)||0)+t[2])}let poc=null,pm=0;for(const [b,q] of bins)if(q>pm){pm=q;poc=b}
+  if(poc!==null)L.push("POC della finestra (livello con più volume scambiato): "+poc+" ("+f2(pm)+" BTC)");
+  if(j1>j0)L.push("CVD: da "+f2(CV[j0])+" a "+f2(CV[j1-1])+" BTC (variazione "+f2(CV[j1-1]-CV[j0])+")");
+  const ev=EV.filter(e=>e[0]>=v.t0&&e[0]<=v.t1);if(ev.length)L.push("Eventi segnalati nella finestra: "+ev.map(e=>fmtT(e[0],true)+" "+e[1]).join(" ; "));
+  L.push("Nota: dati del solo libro/trade Kraken spot; nessun attore identificabile; condizioni di vantaggio temporaneo ≠ edge statistico (le definizioni congelate sono nei protocolli v34–v34d).");
+  return L.join("\n")}
+const cpEl=document.getElementById("cp"),cpN=document.getElementById("cpN"),cpT=document.getElementById("cpT"),cpM=document.getElementById("cpM");
+function cpBuild(){const n=cpN.value.trim();cpT.value=(n?"LA MIA LETTURA: "+n+"\n\n":"")+snapshot()+"\n\nRichiesta: verifica se la mia lettura è corretta; confrontala con le registrazioni (casi simili, esiti a 1/5/15 min al netto dei costi, campione e baseline) e dimmi quali condizioni vedi tu."}
+document.getElementById("bC").onclick=()=>{cpBuild();cpEl.hidden=false;cpM.textContent=""};
+document.getElementById("cpX").onclick=()=>{cpEl.hidden=true};
+cpN.addEventListener("input",cpBuild);
+document.getElementById("cpC").onclick=async()=>{cpBuild();try{await navigator.clipboard.writeText(cpT.value);cpM.textContent="Copiato"}catch(e){cpT.removeAttribute("readonly");cpT.select();try{document.execCommand("copy");cpM.textContent="Copiato"}catch(_){cpM.textContent="Selezionato: copia a mano"}cpT.setAttribute("readonly","")}};
+load(window.DATI);size();if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script></body></html>
