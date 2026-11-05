@@ -21,7 +21,7 @@ body{display:flex;flex-direction:column}#c{touch-action:none;display:block;width
 .rw{display:flex;gap:10px;align-items:center;margin:10px 0 4px}.box small{color:var(--mut)}
 @media(max-width:640px){#top h1{display:none}}
 </style></head><body>
-<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v18</small></h1><span class="t" id="tit"></span>
+<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v19</small></h1><span class="t" id="tit"></span>
 <button id="bCa" class="on">Candele</button><select id="sTf"><option value="15000">15 s</option><option value="60000" selected>1 min</option><option value="300000">5 min</option></select>
 <button id="bNe" class="on">Sfondo nero</button><button id="bCo" title="Intensità e contrasto della mappa di calore">Colori ▾</button><button id="bBo" class="on">Bolle</button><button id="bVo" class="on">Volume</button>
 <button id="bYm" title="Scala prezzo: Auto = si adatta ai dati visibili; Fisso = altezza fissa centrata sul prezzo; Libero = la sposti tu">Prezzo: Fisso</button><button id="bY1" title="Riduci altezza (più zoom sul prezzo)">Altezza −</button><button id="bY2" title="Aumenta altezza (meno zoom sul prezzo)">Altezza +</button>
@@ -77,7 +77,7 @@ function lay(){const n=innerWidth<700;L.FUT=1-Math.min(.95,Math.max(.6,opt.pres3
 function fit(){
   if(!S.length)return;
   const last=S[S.length-1].t,span=live?150000:2400000;
-  v.t1=last+(last-Math.max(S[0].t,last-span))*L.FUT/(1-L.FUT);v.t0=Math.max(S[0].t,last-span);
+  const t0=live?last-span:Math.max(S[0].t,last-span);v.t1=last+(last-t0)*L.FUT/(1-L.FUT);v.t0=t0;
   let lo=1e12,hi=0,j=lb(TR,v.t0,t=>t[0]);for(;j<TR.length;j++){const p=TR[j][1];if(p<lo)lo=p;if(p>hi)hi=p}
   if(lo>hi){lo=S[S.length-1].mid-40;hi=S[S.length-1].mid+40}
   const pad=Math.max(8,(hi-lo)*.12);v.p0=lo-pad;v.p1=hi+pad;follow=true;dirty=true;if(ym==="fisso")fixH=v.p1-v.p0;if(ym!=="libero")applyY(true);
