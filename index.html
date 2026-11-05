@@ -257,7 +257,8 @@ function load(d){S=d.samples.map(s=>{const c=[];if(s[2].length&&typeof s[2][0]==
 let ws=null,bids=new Map(),asks=new Map(),timer=null;
 let pingT=null;const FE={kr:"Kraken BTC/USD spot (libro 100 livelli)",okp:"OKX BTC-USDT-SWAP perp (libro 400 livelli, contratti da 0.01 BTC)",oks:"OKX BTC-USDT spot (libro 400 livelli)"};
 function addTrade(t){TR.push(t);CV.push((CV.length?CV[CV.length-1]:0)+t[3]*t[2]);const b=Math.floor(t[1]);let o=svp.get(b);if(!o){o={b:0,s:0};svp.set(b,o)}t[3]>0?o.b+=t[2]:o.s+=t[2]}
-function liveStart(){
+function stopWs(){if(ws){ws.onmessage=null;ws.onclose=null;try{ws.close()}catch(e){}ws=null}clearInterval(timer);clearInterval(pingT)}
+function liveStart(){stopWs();
   S=[];TR=[];CV=[];EV=[];svp=new Map();bids.clear();asks.clear();live=true;const fe=$("sFe").value;title="LIVE "+FE[fe];$("tit").textContent=title;clearInterval(pingT);
   if(fe==="kr"){ws=new WebSocket("wss://ws.kraken.com/v2");
   ws.onopen=()=>{ws.send(JSON.stringify({method:"subscribe",params:{channel:"book",symbol:["BTC/USD"],depth:100}}));ws.send(JSON.stringify({method:"subscribe",params:{channel:"trade",symbol:["BTC/USD"]}}))};
@@ -281,8 +282,8 @@ function liveStart(){
     if(S.length===1||S.length%30===0){const q=[];for(const s of S.slice(-200))for(const k of s.c)q.push(k[1]);q.sort((a,b)=>a-b);if(q.length){QREF=Math.max(.05,q[q.length>>1]);QMAX=Math.max(QREF*4,q[Math.floor(q.length*.995)])}}
     if(S.length<3)fit();else if(follow){const span=v.t1-v.t0,fut=span*L.FUT;v.t1=now+fut;v.t0=v.t1-span;const c=(bb+ba)/2;if(c<v.p0+8||c>v.p1-8){const m=v.p1-v.p0;v.p0=c-m/2;v.p1=c+m/2}}
     if(ym!=="libero")applyY();dirty=true;draw()},500)}
-$("sFe").onchange=()=>{if(live){if(ws)ws.close();clearInterval(timer);clearInterval(pingT);liveStart()}};
-$("bL").onclick=function(){if(!live){this.classList.add("on");this.textContent="Replay";liveStart()}else{if(ws)ws.close();clearInterval(timer);clearInterval(pingT);live=false;this.classList.remove("on");this.textContent="Live";load(window.DATI3);draw()}};
+$("sFe").onchange=()=>{if(live)liveStart()};
+$("bL").onclick=function(){if(!live){this.classList.add("on");this.textContent="Replay";liveStart()}else{stopWs();live=false;this.classList.remove("on");this.textContent="Live";load(window.DATI3);draw()}};
 // ---- Copia per Claude
 function snapshot(){
   const f1=x=>x.toFixed(1),f2=x=>x.toFixed(2),j0=lb(TR,v.t0,t=>t[0]);let j1=j0;while(j1<TR.length&&TR[j1][0]<=v.t1)j1++;
