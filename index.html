@@ -24,7 +24,7 @@ button:hover,select:hover{border-color:var(--acc)}button.on{background:#27506e;b
 <button id="bCa" class="on">Candele</button><select id="sTf"><option value="15000">15 s</option><option value="60000" selected>1 min</option><option value="300000">5 min</option></select>
 <button id="bBo" class="on">Bolle</button><button id="bVo" class="on">Volume</button>
 <button id="bYm" title="Scala prezzo: Auto = si adatta ai dati visibili; Fisso = altezza fissa centrata sul prezzo; Libero = la sposti tu">Prezzo: Auto</button><button id="bY1" title="Riduci altezza (più zoom sul prezzo)">Altezza −</button><button id="bY2" title="Aumenta altezza (meno zoom sul prezzo)">Altezza +</button>
-<button id="bR">Vista intera</button><button id="bL">Live</button><button id="bC">Copia per Claude</button></div>
+<button id="bR">Vista intera</button><button id="bU" title="Torna alle ultime transazioni e resta agganciato">Ultime ▸|</button><button id="bL">Live</button><button id="bC">Copia per Claude</button></div>
 <canvas id="c"></canvas><div id="tip"></div>
 <div id="cp" hidden><div class="box"><div class="hd"><b>Copia per Claude</b><button id="cpX">Chiudi</button></div>
 <label>La tua lettura (cosa vedi e cosa pensi)</label><textarea id="cpN" rows="4" placeholder="es. muro grosso sull'ask, poco volume sotto, secondo me spinge giù; vorrei capire se regge"></textarea>
@@ -176,10 +176,12 @@ function applyY(){
   const pad=Math.max(5,(hi-lo)*.15);v.p0=lo-pad;v.p1=hi+pad;dirty=true}
 function setYm(m){ym=m;if(m==="fisso")fixH=Math.max(4,v.p1-v.p0);$("bYm").textContent="Prezzo: "+({auto:"Auto",fisso:"Fisso",libero:"Libero"})[m];applyY();draw()}
 function altezza(f){if(ym!=="fisso"){fixH=Math.max(4,v.p1-v.p0);setYm("fisso")}fixH=Math.min(5000,Math.max(4,fixH*f));applyY();draw()}
+function setFollow(){follow=!!(live&&S.length&&v.t1>=S[S.length-1].t+(v.t1-v.t0)*L.FUT*.5)}
+function agganciaUltime(){if(!S.length)return;const span=v.t1-v.t0,l=S[S.length-1].t;v.t1=l+span*L.FUT;v.t0=v.t1-span;follow=true;applyY();dirty=true;draw()}
 // ---- zoom / pan (mouse + touch)
 function zoomT(f,x){const t=xt(x);v.t0=t-(t-v.t0)*f;v.t1=t+(v.t1-t)*f;if(v.t1-v.t0<30){const m=(v.t0+v.t1)/2;v.t0=m-15;v.t1=m+15}dirty=true;applyY()}
 function zoomP(f,y){const p=yp(y);v.p0=p-(p-v.p0)*f;v.p1=p+(v.p1-p)*f;if(v.p1-v.p0<1.5){const m=(v.p0+v.p1)/2;v.p0=m-.75;v.p1=m+.75}dirty=true}
-cv.addEventListener("wheel",e=>{e.preventDefault();const r=cv.getBoundingClientRect(),f=e.deltaY>0?1.18:1/1.18,x=e.clientX-r.left,y=e.clientY-r.top;(e.shiftKey||x>mw())?altezza(f):(zoomT(f,x),draw());follow=false},{passive:false});
+cv.addEventListener("wheel",e=>{e.preventDefault();const r=cv.getBoundingClientRect(),f=e.deltaY>0?1.18:1/1.18,x=e.clientX-r.left,y=e.clientY-r.top;(e.shiftKey||x>mw())?altezza(f):(zoomT(f,(live&&follow)?mw()*(1-L.FUT):x),draw());setFollow()},{passive:false});
 const ptr=new Map();let pinch=null,moved=0,lastTap=0;
 function showTip(x,y,cxp,cyp){
   if(x>mw()||y>pmain()){cross=null;tip.style.display="none";draw();return}
@@ -194,9 +196,9 @@ cv.addEventListener("pointermove",e=>{
   const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;if(ptr.has(e.pointerId))ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(pinch&&ptr.size>=2){const [a,b]=[...ptr.values()];const dx=Math.abs(a.x-b.x)||1,dy=Math.abs(a.y-b.y)||1;moved=9;const sx=pinch.dx/dx,vv=pinch.v,mxp=pinch.mx-r.left,myp=pinch.my-r.top;
     const t=vv.t0+mxp/mw()*(vv.t1-vv.t0);v.t0=t-(t-vv.t0)*sx;v.t1=t+(vv.t1-t)*sx;
-    if(Math.abs(a.y-b.y)>40||dy>dx){const sy=pinch.dy/dy,p=vv.p0+(pmain()-myp)/pmain()*(vv.p1-vv.p0);if(ym==="libero"){v.p0=p-(p-vv.p0)*sy;v.p1=p+(vv.p1-p)*sy}else{fixH=Math.max(4,(vv.p1-vv.p0)*sy);if(ym!=="fisso")setYm("fisso")}}applyY();dirty=true;follow=false;draw();return}
+    if(Math.abs(a.y-b.y)>40||dy>dx){const sy=pinch.dy/dy,p=vv.p0+(pmain()-myp)/pmain()*(vv.p1-vv.p0);if(ym==="libero"){v.p0=p-(p-vv.p0)*sy;v.p1=p+(vv.p1-p)*sy}else{fixH=Math.max(4,(vv.p1-vv.p0)*sy);if(ym!=="fisso")setYm("fisso")}}applyY();dirty=true;setFollow();draw();return}
   if(drag&&ptr.size===1&&(e.buttons||e.pointerType==="touch")){const mdx=e.clientX-drag.x,mdy=e.clientY-drag.y;moved=Math.max(moved,Math.hypot(mdx,mdy));
-    const dx=mdx/mw()*(drag.v.t1-drag.v.t0),dy=mdy/pmain()*(drag.v.p1-drag.v.p0);v.t0=drag.v.t0-dx;v.t1=drag.v.t1-dx;if(ym==="libero"){v.p0=drag.v.p0+dy;v.p1=drag.v.p1+dy}else applyY();follow=false;dirty=true;draw();return}
+    const dx=mdx/mw()*(drag.v.t1-drag.v.t0),dy=mdy/pmain()*(drag.v.p1-drag.v.p0);v.t0=drag.v.t0-dx;v.t1=drag.v.t1-dx;if(ym==="libero"){v.p0=drag.v.p0+dy;v.p1=drag.v.p1+dy}else applyY();setFollow();dirty=true;draw();return}
   if(e.pointerType==="mouse")showTip(x,y,e.clientX,e.clientY)});
 function up(e){const r=cv.getBoundingClientRect(),was=ptr.size;ptr.delete(e.pointerId);if(ptr.size<2)pinch=null;
   if(ptr.size===0){drag=null;if(e.pointerType==="touch"&&moved<8&&was===1){const now=Date.now();if(now-lastTap<320){fit();draw();tip.style.display="none"}else showTip(e.clientX-r.left,e.clientY-r.top,e.clientX,e.clientY);lastTap=now}}
@@ -210,7 +212,7 @@ $("bCa").onclick=()=>{opt.candele=!opt.candele;saveOpt();sync();dirty=true;draw(
 $("bBo").onclick=()=>{opt.bolle=!opt.bolle;saveOpt();sync();dirty=true;draw()};
 $("bVo").onclick=()=>{opt.volume=!opt.volume;saveOpt();sync();dirty=true;draw()};
 $("sTf").onchange=e=>{opt.tf=+e.target.value;saveOpt();dirty=true;draw()};
-$("bR").onclick=()=>{fit();draw()};
+$("bR").onclick=()=>{fit();draw()};$("bU").onclick=agganciaUltime;
 $("bYm").onclick=()=>setYm(ym==="auto"?"fisso":ym==="fisso"?"libero":"auto");$("bY1").onclick=()=>altezza(1/1.3);$("bY2").onclick=()=>altezza(1.3);
 addEventListener("keydown",e=>{if(e.target.tagName==="TEXTAREA"||e.target.tagName==="SELECT")return;if(e.key==="+"||e.key==="=")altezza(1/1.3);else if(e.key==="-")altezza(1.3);else if(e.key==="a"||e.key==="A")setYm("auto")});
 window.addEventListener("resize",size);
