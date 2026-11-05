@@ -21,9 +21,9 @@ body{display:flex;flex-direction:column}#c{touch-action:none;display:block;width
 .rw{display:flex;gap:10px;align-items:center;margin:10px 0 4px}.box small{color:var(--mut)}
 @media(max-width:640px){#top h1{display:none}}
 </style></head><body>
-<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v20</small></h1><span class="t" id="tit"></span>
+<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v21</small></h1><span class="t" id="tit"></span>
 <button id="bCa" class="on">Candele</button><select id="sTf"><option value="15000">15 s</option><option value="60000" selected>1 min</option><option value="300000">5 min</option></select>
-<button id="bNe" class="on">Sfondo nero</button><button id="bCo" title="Intensità e contrasto della mappa di calore">Colori ▾</button><button id="bBo" class="on">Bolle</button><button id="bB1" title="Bolle più piccole">Bolle −</button><button id="bB2" title="Bolle più grandi">Bolle +</button><button id="bVo" class="on">Volume</button>
+<button id="bNe" class="on">Sfondo nero</button><button id="bCo" title="Intensità e contrasto della mappa di calore">Colori ▾</button><button id="bSg" class="on" title="Segnali: assorbimento, iceberg, muro ritirato, layering, sweep, tocco di livello">Segnali</button><button id="bBo" class="on">Bolle</button><button id="bB1" title="Bolle più piccole">Bolle −</button><button id="bB2" title="Bolle più grandi">Bolle +</button><button id="bVo" class="on">Volume</button>
 <button id="bYm" title="Scala prezzo: Auto = si adatta ai dati visibili; Fisso = altezza fissa centrata sul prezzo; Libero = la sposti tu">Prezzo: Fisso</button><button id="bY1" title="Riduci altezza (più zoom sul prezzo)">Altezza −</button><button id="bY2" title="Aumenta altezza (meno zoom sul prezzo)">Altezza +</button>
 <button id="bG1" title="Granularità più fine: righe più sottili ([)">Passo −</button><button id="bGl" title="Passo del prezzo; clic = automatico">Passo: auto</button><button id="bG2" title="Granularità più larga: righe più spesse (])">Passo +</button>
 <button id="bR">Vista intera</button><button id="bU" title="Ricentra il grafico su prezzo e ultime transazioni (tasto C)">Ricentra</button><select id="sFe" title="Sorgente dati del Live"><option value="kr">Kraken spot</option><option value="krf">Kraken futures PF_XBTUSD</option><option value="okp">OKX perp BTC-USDT</option><option value="okx">OKX X-Perp BTC-USD</option><option value="oks">OKX spot BTC-USDT</option></select><button id="bL">Live</button><button id="bTv" title="Apre lo stesso strumento su TradingView (nuova scheda)">TradingView ↗</button><button id="bC">Copia per Claude</button></div>
@@ -49,7 +49,7 @@ let L={AX:50,COB:46,SVP:92,CVD:120,TAX:22,VOL:46,FUT:.1};
 let ym="fisso",fixH=60,gran=0;const GR=[1,2,5,10,20,25,50,100];
 function stepNow(){if(gran)return gran;const px=pmain()/(v.p1-v.p0);return GR.find(a=>a*px>=16)||100}
 const agg=(cells,stp)=>{if(stp<=1)return cells;const m=new Map();for(const k of cells){const b=Math.floor(k[0]/stp)*stp;let o=m.get(b);if(!o){o=[b,0,k[2],0,0];m.set(b,o)}o[1]+=k[1];k[2]===1?o[4]+=k[1]:o[3]+=k[1]}for(const o of m.values())o[2]=o[4]>o[3]?1:(o[3]>0?0:o[2]);return [...m.values()]};
-const opt={candele:true,bolle:true,volume:true,tf:60000,nero:true,pres3:.9,lum:1,con:1,sens:1,bub:1};
+const opt={candele:true,bolle:true,volume:true,tf:60000,nero:true,pres3:.9,lum:1,con:1,sens:1,bub:1,segn:true};
 try{const o=JSON.parse(localStorage.getItem("mappa_opt")||"{}");Object.assign(opt,o)}catch(e){}
 function saveOpt(){try{localStorage.setItem("mappa_opt",JSON.stringify(opt))}catch(e){}}
 // ---- palette calore: fondo ardesia -> blu -> arancio -> rosso -> giallo -> bianco
@@ -131,6 +131,15 @@ function renderBase(){
   // istogramma volume sul fondo dell'area prezzo
   if(opt.volume&&cs.length){const mxv=Math.max(...cs.map(c=>c.b+c.s),1e-9),H0=L.VOL,cw=Math.max(2,(tx(v.t0+opt.tf)-tx(v.t0))*.8);
     for(const c of cs){const X=tx(c.tl),hb=c.b/mxv*H0,hs=c.s/mxv*H0;x.fillStyle="rgba(229,96,90,.75)";x.fillRect(X-cw/2,h-hs,cw,hs);x.fillStyle="rgba(70,209,123,.75)";x.fillRect(X-cw/2,h-hs-hb,cw,hb)}}
+  // segnali
+  evHit=[];
+  if(opt.segn&&EVS.length){sgScore();x.font="bold 11px system-ui";x.textAlign="center";
+    for(const e of EVS){const X=tx(e.t),Y=py(e.p);if(X<-12||X>w+12||Y<-12||Y>h+12)continue;const r=e.cand?12:9,col=e.dir>0?"#56e084":"#f0625c";
+      x.fillStyle="#0b0f14";x.strokeStyle=col;x.lineWidth=e.cand?3:1.5;x.beginPath();x.arc(X,Y,r,0,6.2832);x.fill();x.stroke();
+      x.fillStyle=col;x.fillText(e.kind,X,Y+4);
+      x.beginPath();if(e.dir>0){x.moveTo(X,Y-r-7);x.lineTo(X-4,Y-r-1);x.lineTo(X+4,Y-r-1)}else{x.moveTo(X,Y+r+7);x.lineTo(X-4,Y+r+1);x.lineTo(X+4,Y+r+1)}x.closePath();x.fill();
+      evHit.push({x:X,y:Y,r:r+4,e})}
+    x.textAlign="left"}
   x.restore();
   // asse prezzi + griglia
   x.fillStyle="#222a33";x.fillRect(w,0,L.AX,h);x.fillStyle="#c5d1de";x.font="13px system-ui";
@@ -208,6 +217,7 @@ function showTip(x,y,cxp,cyp){
   if(x>mw()||y>pmain()){cross=null;tip.style.display="none";draw();return}
   cross={x,y};draw();const t=xt(x),p=yp(y);let txt=fmtT(t,true)+" UTC\nprezzo "+p.toFixed(1);
   const si=Math.max(0,lb(S,t,s=>s.t)-1);if(S[si]){const bn=Math.floor(p),c=S[si].c.find(k=>k[0]===bn);txt+="\nlibro in questo $: "+(c?c[1].toFixed(2)+" BTC ("+(c[2]?"vendita":"acquisto")+")":"—")}
+  for(const o of evHit){if(Math.hypot(o.x-x,o.y-y)<=o.r+2){const e=o.e;txt+="\n— SEGNALE "+e.kind+": "+KIND[e.kind]+"\n  attesa: "+(e.dir>0?"SU":"GIÙ")+" | dimensione "+e.size.toFixed(2)+" BTC"+(e.conMuro!==undefined?" | con muro: "+(e.conMuro?"sì":"no"):"")+(e.liv?" | livello: "+e.liv:"")+"\n  punteggio parziale "+e.score+"/6 (confluenza "+e.parts.confluenza+", livello "+e.parts.livello+", libro "+e.parts.libro+")"+(e.cand?" — CANDIDATO":"")+"\n  (approssimato sulla mappa; il registro ufficiale è sul VPS)";break}}
   for(const o of hit){if(Math.hypot(o.x-x,o.y-y)<=Math.max(o.r,12)){txt+="\n— bolla: "+o.c.q.toFixed(3)+" BTC, "+(o.c.s>0?"acquisto":"vendita")+" aggressiva, "+o.c.n+" trade";break}}
   tip.textContent=txt;tip.style.display="block";tip.style.left=Math.max(4,Math.min(cxp+14,innerWidth-250))+"px";tip.style.top=Math.max(48,Math.min(cyp+14,innerHeight-110))+"px"}
 let ax=null,pd_=null;const presX=()=>S.length?tx(S[S.length-1].t):-99;
@@ -233,11 +243,12 @@ cv.addEventListener("pointerup",up);cv.addEventListener("pointercancel",up);
 cv.addEventListener("dblclick",()=>{fit();draw()});
 cv.addEventListener("pointerleave",e=>{if(e.pointerType==="mouse"){cross=null;tip.style.display="none";draw()}});
 // ---- pulsanti
-function sync(){$("bCa").classList.toggle("on",opt.candele);$("bBo").classList.toggle("on",opt.bolle);$("bNe").classList.toggle("on",opt.nero);$("bVo").classList.toggle("on",opt.volume);$("sTf").value=String(opt.tf)}
+function sync(){$("bCa").classList.toggle("on",opt.candele);$("bBo").classList.toggle("on",opt.bolle);$("bSg").classList.toggle("on",opt.segn);$("bNe").classList.toggle("on",opt.nero);$("bVo").classList.toggle("on",opt.volume);$("sTf").value=String(opt.tf)}
 $("bCa").onclick=()=>{opt.candele=!opt.candele;saveOpt();sync();dirty=true;draw()};
 $("bNe").onclick=()=>{opt.nero=!opt.nero;buildPal();saveOpt();sync();dirty=true;draw()};
 function bubSet(f){opt.bub=Math.min(4,Math.max(.3,+(opt.bub*f).toFixed(3)));opt.bolle=true;saveOpt();sync();dirty=true;draw()}
 $("bB1").onclick=()=>bubSet(1/1.25);$("bB2").onclick=()=>bubSet(1.25);
+$("bSg").onclick=()=>{opt.segn=!opt.segn;saveOpt();sync();dirty=true;draw()};
 $("bBo").onclick=()=>{opt.bolle=!opt.bolle;saveOpt();sync();dirty=true;draw()};
 $("bVo").onclick=()=>{opt.volume=!opt.volume;saveOpt();sync();dirty=true;draw()};
 $("sTf").onchange=e=>{opt.tf=+e.target.value;saveOpt();dirty=true;draw()};
@@ -254,14 +265,74 @@ $("bG1").onclick=()=>stepGran(-1);$("bG2").onclick=()=>stepGran(1);$("bGl").oncl
 $("bYm").onclick=()=>setYm(ym==="fisso"?"auto":ym==="auto"?"libero":"fisso");$("bY1").onclick=()=>altezza(1/1.3);$("bY2").onclick=()=>altezza(1.3);
 addEventListener("keydown",e=>{if(e.target.tagName==="TEXTAREA"||e.target.tagName==="SELECT")return;if(e.key==="+"||e.key==="=")altezza(1/1.3);else if(e.key==="-")altezza(1.3);else if(e.key==="a"||e.key==="A")setYm("auto");else if(e.key==="<")bubSet(1/1.25);else if(e.key===">")bubSet(1.25);else if(e.key==="[")stepGran(-1);else if(e.key==="]")stepGran(1);else if(e.key==="c"||e.key==="C")agganciaUltime()});
 window.addEventListener("resize",size);
-function load(d){S=d.samples.map(s=>{const c=[];if(s[2].length&&typeof s[2][0]==="number"){for(let i=0;i<s[2].length;i+=3)c.push([s[2][i],s[2][i+1],s[2][i+2]])}else for(const k of s[2])c.push(k);return{t:s[0],mid:s[1],c}});TR=d.trades;EV=d.eventi||[];title=d.titolo;$("tit").textContent=title;prep();fit()}
+function load(d){S=d.samples.map(s=>{const c=[];if(s[2].length&&typeof s[2][0]==="number"){for(let i=0;i<s[2].length;i+=3)c.push([s[2][i],s[2][i+1],s[2][i+2]])}else for(const k of s[2])c.push(k);return{t:s[0],mid:s[1],c}});TR=d.trades;EV=d.eventi||[];title=d.titolo;$("tit").textContent=title;prep();sgAll();fit()}
+// ---- segnali: definizioni v34/v35 applicate ai campioni della mappa (livelli aggregati a 1 $, quindi APPROSSIMATE)
+let EVS=[],SG=null,evHit=[];
+const KIND={A:"Assorbimento (H1)",I:"Iceberg forte (H2)",T:"Tocco di livello con muro (H3)",R:"Muro ritirato vicino (H4)",L:"Layering ristretto (H5)",S:"Sweep (H6)"};
+function sgReset(){SG={lastT:0,walls:new Map(),lay:{bid:null,ask:null},ice:new Map(),lastAbs:-1e12,lastSw:{"1":-1e12,"-1":-1e12},touch:new Map(),grp:null,swC:{t:0,hi:[]}};EVS=[]}
+const med=a=>{if(!a.length)return 0;const b=a.slice().sort((x,y)=>x-y);return b[b.length>>1]};
+function sgStep(s){
+  const t=s.t,mid=s.mid,t0=SG.lastT;SG.lastT=t;if(!t0||t<=t0)return;
+  const bl=[],al=[];for(const k of s.c){if(k[2]===1){if(k[0]-mid<=60)al.push(k)}else if(mid-k[0]<=60)bl.push(k)}
+  if(bl.length<5||al.length<5)return;
+  // trade del passo
+  let j=lb(TR,t0,x=>x[0]);while(j<TR.length&&TR[j][0]<=t0)j++;const ex={};const trs=[];
+  for(;j<TR.length&&TR[j][0]<=t;j++){const x=TR[j];trs.push(x);const key=(x[3]>0?"ask":"bid")+"|"+Math.floor(x[1]);ex[key]=(ex[key]||0)+x[2]}
+  const thr={bid:Math.max(10,5*med(bl.map(k=>k[1]))),ask:Math.max(10,5*med(al.map(k=>k[1])))};
+  const big={bid:bl.filter(k=>k[1]>=thr.bid),ask:al.filter(k=>k[1]>=thr.ask)};
+  let bq=0,aq=0;for(const k of bl)if(mid-k[0]<=30)bq+=k[1];for(const k of al)if(k[0]-mid<=30)aq+=k[1];
+  const imb=bq+aq>0?bq/(bq+aq):.5;
+  const push=(kind,p,dir,size,extra)=>EVS.push(Object.assign({t,p,kind,dir,size,imb,dl:levDist(p,t)},extra||{}));
+  // --- muri (H4)
+  for(const [key,w] of SG.walls){const lv=w.side==="bid"?bl:al,c=lv.find(k=>k[0]===w.p),q=c?c[1]:0;w.exec+=ex[key]||0;
+    const d=w.side==="bid"?mid-w.p:w.p-mid;w.mind=Math.min(w.mind,d);if(q>w.maxq)w.maxq=q;
+    if(d>60)SG.walls.delete(key);
+    else if(q<.3*w.maxq){const life=(t-w.start)/1000,pulled=Math.max(0,w.maxq-w.exec-q);
+      if(life>=5&&w.exec<.2*w.maxq&&pulled>=.8*w.maxq&&w.mind<=10&&life<=120)push("R",w.p,w.side==="ask"?1:-1,w.maxq,{vita:life});
+      SG.walls.delete(key)}}
+  for(const side of ["bid","ask"])for(const k of big[side]){const key=side+"|"+k[0];if(!SG.walls.has(key))SG.walls.set(key,{side,p:k[0],start:t,maxq:k[1],exec:ex[key]||0,mind:side==="bid"?mid-k[0]:k[0]-mid})}
+  // --- assorbimento (H1): |delta 30 s| >= 2,95 BTC, progresso < 25% del range 60 s
+  {const j30=lb(TR,t-30000,x=>x[0]);let D=0;for(let q=j30;q<TR.length&&TR[q][0]<=t;q++)D+=TR[q][3]*TR[q][2];
+    if(Math.abs(D)>=2.95&&t-SG.lastAbs>=60000){const m30=midAt(t-30000);let hi=-1e18,lo=1e18;for(let i=Math.max(0,lb(S,t-60000,x=>x.t));i<S.length&&S[i].t<=t;i++){hi=Math.max(hi,S[i].mid);lo=Math.min(lo,S[i].mid)}
+      const rng=Math.max(1,hi-lo),sg=Math.sign(D),prog=sg*(mid-m30);
+      if(prog<.25*rng){let wq=0;const lv=sg>0?big.ask:big.bid;for(const k of lv)if(Math.abs(k[0]-mid)<=5)wq+=k[1];SG.lastAbs=t;push("A",mid,-sg,Math.abs(D),{conMuro:wq>=10,muro:wq})}}}
+  // --- layering ristretto (H5)
+  for(const side of ["bid","ask"]){const lv=side==="bid"?bl:al,m3=Math.max(.5,3*med(lv.map(k=>k[1])));let nbg=0,tq=0;
+    for(const k of lv){const d=Math.abs(k[0]-mid);if(d<=30){tq+=k[1];if(k[1]>=m3)nbg++}}
+    let exn=0;for(const key in ex)if(key.startsWith(side)&&Math.abs(+key.split("|")[1]-mid)<=30)exn+=ex[key];
+    const act=nbg>=3&&tq>=40,st=SG.lay[side];
+    if(!st){if(act)SG.lay[side]={t0:t,maxq:tq,exec:exn,per:false}}
+    else{st.exec+=exn;st.maxq=Math.max(st.maxq,tq);if((t-st.t0)>=10000&&act)st.per=true;
+      if(!act&&!st.per&&tq<.3*st.maxq)SG.lay[side]=null;
+      else if(st.per&&tq<.3*st.maxq){if(st.exec<.2*st.maxq)push("L",mid,side==="ask"?1:-1,st.maxq,{vita:(t-st.t0)/1000});SG.lay[side]=null}
+      else if(!st.per&&!act&&(t-st.t0)<10000)SG.lay[side]=null}}
+  // --- sweep (H6): stesso lato, distanza fra trade <= 1 ms (la mappa ha i millisecondi, il protocollo i microsecondi), >=5 BTC, >=5 prezzi, >=10 $
+  const closeG=()=>{const g=SG.grp;SG.grp=null;if(!g)return;if(g.q>=5&&g.pr.size>=5&&g.hi-g.lo>=10&&g.te-SG.lastSw[g.side]>=60000){SG.lastSw[g.side]=g.te;const tt=t;EVS.push({t:g.te,p:g.last,kind:"S",dir:-g.side,size:g.q,imb,dl:levDist(g.last,g.te),range:g.hi-g.lo})}};
+  for(const x of trs){const g=SG.grp;if(g&&g.side===x[3]&&x[0]-g.te<=1){g.q+=x[2];g.pr.add(x[1]);g.hi=Math.max(g.hi,x[1]);g.lo=Math.min(g.lo,x[1]);g.te=x[0];g.last=x[1]}else{closeG();SG.grp={side:x[3],q:x[2],pr:new Set([x[1]]),hi:x[1],lo:x[1],te:x[0],last:x[1]}}}
+  closeG();
+  // --- iceberg forte (H2), approssimato su celle da 1 $
+  for(const x of trs){const side=x[3]>0?"ask":"bid",key=side+"|"+Math.floor(x[1]);let st=SG.ice.get(key);if(!st){const c=(side==="ask"?al:bl).find(k=>k[0]===Math.floor(x[1]));const v=c?c[1]:0;st=SG.ice.set(key,{t0:x[0],t1:x[0],exec:0,max:v,ref:0,last:v,p:Math.floor(x[1]),side}).get(key)}st.exec+=x[2];st.t1=x[0]}
+  for(const [key,st] of SG.ice){const c=(st.side==="ask"?al:bl).find(k=>k[0]===st.p),q=c?c[1]:0;if(q>st.max)st.max=q;if(q>st.last+1e-9&&st.exec>0)st.ref++;st.last=q;
+    if(t-st.t1>60000){if(st.exec>=2&&st.exec>=3*st.max&&st.ref>=3)EVS.push({t:st.t1,p:st.p,kind:"I",dir:st.side==="bid"?1:-1,size:st.exec,imb,dl:levDist(st.p,st.t1),rif:st.ref});SG.ice.delete(key)}}
+  // --- tocco di livello con muro (H3)
+  {const lv=levels(t),m60=midAt(t-60000);for(const L_ of lv){const key=L_.n+"|"+Math.round(L_.p);const lastT=SG.touch.get(key)||-1e12;
+    if(Math.abs(mid-L_.p)<=5&&Math.abs(m60-L_.p)>=20&&t-lastT>=300000){let wq=0;for(const k of big.bid.concat(big.ask))if(Math.abs(k[0]-L_.p)<=3)wq=Math.max(wq,k[1]);
+      if(wq>=10){SG.touch.set(key,t);push("T",L_.p,m60<L_.p?-1:1,wq,{liv:L_.n})}}}}
+}
+function levels(t){const out=[],m=midAt(t);const r=Math.floor(m/500)*500;out.push({n:"tondo",p:r},{n:"tondo",p:r+500});
+  if(SG.swC.t<t-10000){SG.swC.t=t;const h=[];for(const mn of [15,60]){let hi=-1e18,lo=1e18;for(let i=Math.max(0,lb(S,t-mn*60000,x=>x.t));i<S.length&&S[i].t<=t-60000;i++){hi=Math.max(hi,S[i].mid);lo=Math.min(lo,S[i].mid)}if(hi>0){h.push({n:"max "+mn+"m",p:hi},{n:"min "+mn+"m",p:lo})}}SG.swC.hi=h}
+  return out.concat(SG.swC.hi)}
+function levDist(p,t){let d=1e9;if(SG)for(const L_ of levels(t))d=Math.min(d,Math.abs(p-L_.p));return d}
+function sgScore(){for(const e of EVS){let b=0;for(const o of EVS)if(o!==e&&o.kind!==e.kind&&Math.abs(o.t-e.t)<=60000&&Math.abs(o.p-e.p)<=5)b++;
+  const c=e.dl<=3?2:e.dl<=10?1:0,sh=e.dir>0?e.imb:1-e.imb,m=sh>.75?2:sh>=.6?1:0,bb=Math.min(2,b);e.parts={confluenza:bb,livello:c,libro:m};e.score=bb+c+m;e.cand=e.score>=4}}
+function sgAll(){sgReset();for(const s of S)sgStep(s)}
 // ---- live Kraken (feed pubblico v2)
 let ws=null,bids=new Map(),asks=new Map(),timer=null;
 let pingT=null;const FE={krf:"Kraken Futures PF_XBTUSD perp (libro completo)",kr:"Kraken BTC/USD spot (libro 100 livelli)",okp:"OKX BTC-USDT-SWAP perp (libro 400 livelli, contratti da 0.01 BTC)",okx:"OKX X-Perp BTC-USD_UM_XPERP-310404 (contratti da 0.0001 BTC)",oks:"OKX BTC-USDT spot (libro 400 livelli)"};
 function addTrade(t){TR.push(t);CV.push((CV.length?CV[CV.length-1]:0)+t[3]*t[2]);const b=Math.floor(t[1]);let o=svp.get(b);if(!o){o={b:0,s:0};svp.set(b,o)}t[3]>0?o.b+=t[2]:o.s+=t[2]}
 function stopWs(){if(ws){ws.onmessage=null;ws.onclose=null;try{ws.close()}catch(e){}ws=null}clearInterval(timer);clearInterval(pingT)}
 function liveStart(){stopWs();
-  S=[];TR=[];CV=[];EV=[];svp=new Map();bids.clear();asks.clear();live=true;const fe=$("sFe").value;title="LIVE "+FE[fe];$("tit").textContent=title;clearInterval(pingT);
+  S=[];TR=[];CV=[];EV=[];svp=new Map();bids.clear();asks.clear();live=true;sgReset();const fe=$("sFe").value;title="LIVE "+FE[fe];$("tit").textContent=title;clearInterval(pingT);
   if(fe==="kr"){ws=new WebSocket("wss://ws.kraken.com/v2");
   ws.onopen=()=>{ws.send(JSON.stringify({method:"subscribe",params:{channel:"book",symbol:["BTC/USD"],depth:100}}));ws.send(JSON.stringify({method:"subscribe",params:{channel:"trade",symbol:["BTC/USD"]}}))};
   ws.onmessage=e=>{const m=JSON.parse(e.data);
@@ -287,7 +358,7 @@ function liveStart(){stopWs();
     for(const [p,q] of bids)if(p>=bb-80){const k=Math.floor(p)+"b",o=cells.get(k)||[Math.floor(p),0,0];o[1]+=q;cells.set(k,o)}
     for(const [p,q] of asks)if(p<=ba+80){const k=Math.floor(p)+"a",o=cells.get(k)||[Math.floor(p),0,1];o[1]+=q;cells.set(k,o)}
     const now=Date.now();S.push({t:now,mid:(bb+ba)/2,c:[...cells.values()].map(o=>[o[0],+o[1].toFixed(2),o[2]])});
-    if(S.length>7200)S.shift();while(TR.length>1&&TR[0][0]<S[0].t-5000){TR.shift();CV.shift()}
+    sgStep(S[S.length-1]);if(S.length>7200)S.shift();while(TR.length>1&&TR[0][0]<S[0].t-5000){TR.shift();CV.shift()}
     if(S.length===1||S.length%30===0){const q=[];for(const s of S.slice(-200))for(const k of s.c)q.push(k[1]);q.sort((a,b)=>a-b);if(q.length){QREF=Math.max(.05,q[q.length>>1]);QMAX=Math.max(QREF*4,q[Math.floor(q.length*.995)])}}
     if(S.length<3)fit();else if(follow){const span=v.t1-v.t0,fut=span*L.FUT;v.t1=now+fut;v.t0=v.t1-span;const c=(bb+ba)/2;if(c<v.p0+8||c>v.p1-8){const m=v.p1-v.p0;v.p0=c-m/2;v.p1=c+m/2}}
     if(ym!=="libero")applyY();dirty=true;draw()},500)}
@@ -313,6 +384,7 @@ function snapshot(){
   if(poc!==null)Ls.push("POC della finestra (livello con più volume scambiato): "+poc+" ("+f2(pm)+" BTC)");
   if(j1>j0)Ls.push("CVD: da "+f2(CV[j0])+" a "+f2(CV[j1-1])+" BTC (variazione "+f2(CV[j1-1]-CV[j0])+")");
   const cs=candles();if(cs.length){const c0=cs[0],c1=cs[cs.length-1];Ls.push("Candele "+(opt.tf/1000)+" s nella finestra: "+cs.length+"; prima open "+f1(c0.o)+", ultima close "+f1(c1.c)+"; massimo "+f1(Math.max(...cs.map(c=>c.h)))+", minimo "+f1(Math.min(...cs.map(c=>c.l))))}
+  if(EVS.length){sgScore();const se=EVS.filter(e=>e.t>=v.t0&&e.t<=v.t1);if(se.length)Ls.push("Segnali automatici nella finestra (approssimati, definizioni v34/v35): "+se.map(e=>fmtT(e.t,true)+" "+KIND[e.kind]+" prezzo "+f1(e.p)+" attesa "+(e.dir>0?"SU":"GIÙ")+" dim "+f2(e.size)+" BTC punteggio "+e.score+"/6"+(e.cand?" CANDIDATO":"")).join(" ; "))}
   const ev=EV.filter(e=>e[0]>=v.t0&&e[0]<=v.t1);if(ev.length)Ls.push("Eventi segnalati nella finestra: "+ev.map(e=>fmtT(e[0],true)+" "+e[1]).join(" ; "));
   Ls.push("Nota: dati del solo libro/trade Kraken spot; nessun attore identificabile; condizioni di vantaggio temporaneo ≠ edge statistico (le definizioni congelate sono nei protocolli v34–v35).");
   return Ls.join("\n")}
