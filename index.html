@@ -12,6 +12,7 @@
 button,select{background:#2b3641;color:var(--fg);border:1px solid var(--ln);border-radius:6px;padding:5px 9px;font:inherit;cursor:pointer}
 button:hover,select:hover{border-color:var(--acc)}button.on{background:#27506e;border-color:var(--acc)}
 #c{touch-action:none;display:block;width:100%;height:calc(100% - 42px);cursor:crosshair}
+#hp{position:fixed;top:46px;right:10px;z-index:8;background:var(--panel);border:1px solid var(--ln);border-radius:10px;padding:10px 12px;width:270px;box-shadow:0 6px 24px #000a}#hp[hidden]{display:none}#hp label{display:block;color:var(--mut);font-size:12px;margin:8px 0 2px}#hp input{width:100%}#hp canvas{display:block;width:100%;height:14px;margin:6px 0;border-radius:3px}
 #tip{position:fixed;pointer-events:none;background:#12171cee;border:1px solid var(--ln);border-radius:6px;padding:6px 8px;font-size:12px;display:none;white-space:pre;z-index:5}
 #cp{position:fixed;inset:0;background:#000a;z-index:9;display:flex;align-items:flex-end;justify-content:center}#cp[hidden]{display:none}
 .box{background:var(--panel);border:1px solid var(--ln);border-radius:12px 12px 0 0;padding:12px;width:min(720px,100%);max-height:92%;overflow:auto}
@@ -20,12 +21,17 @@ button:hover,select:hover{border-color:var(--acc)}button.on{background:#27506e;b
 .rw{display:flex;gap:10px;align-items:center;margin:10px 0 4px}.box small{color:var(--mut)}
 @media(max-width:640px){#top h1{display:none}}
 </style></head><body>
-<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v12</small></h1><span class="t" id="tit"></span>
+<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v13</small></h1><span class="t" id="tit"></span>
 <button id="bCa" class="on">Candele</button><select id="sTf"><option value="15000">15 s</option><option value="60000" selected>1 min</option><option value="300000">5 min</option></select>
-<button id="bNe" class="on">Sfondo nero</button><button id="bBo" class="on">Bolle</button><button id="bVo" class="on">Volume</button>
+<button id="bNe" class="on">Sfondo nero</button><button id="bCo" title="Intensità e contrasto della mappa di calore">Colori ▾</button><button id="bBo" class="on">Bolle</button><button id="bVo" class="on">Volume</button>
 <button id="bYm" title="Scala prezzo: Auto = si adatta ai dati visibili; Fisso = altezza fissa centrata sul prezzo; Libero = la sposti tu">Prezzo: Fisso</button><button id="bY1" title="Riduci altezza (più zoom sul prezzo)">Altezza −</button><button id="bY2" title="Aumenta altezza (meno zoom sul prezzo)">Altezza +</button>
 <button id="bG1" title="Granularità più fine: righe più sottili ([)">Passo −</button><button id="bGl" title="Passo del prezzo; clic = automatico">Passo: auto</button><button id="bG2" title="Granularità più larga: righe più spesse (])">Passo +</button>
 <button id="bR">Vista intera</button><button id="bU" title="Ricentra il grafico su prezzo e ultime transazioni (tasto C)">Ricentra</button><button id="bL">Live</button><button id="bC">Copia per Claude</button></div>
+<div id="hp" hidden><b>Mappa di calore</b><canvas id="hg" width="240" height="14"></canvas>
+<label>Luminosità <span id="vl"></span></label><input type="range" id="rl" min="40" max="220" step="5">
+<label>Contrasto <span id="vc"></span></label><input type="range" id="rc" min="50" max="300" step="5">
+<label>Sensibilità (verso destra: anche i livelli piccoli si accendono) <span id="vs"></span></label><input type="range" id="rs" min="25" max="400" step="5">
+<div class="rw"><button id="hr">Ripristina</button><button id="hx">Chiudi</button></div></div>
 <canvas id="c"></canvas><div id="tip"></div>
 <div id="cp" hidden><div class="box"><div class="hd"><b>Copia per Claude</b><button id="cpX">Chiudi</button></div>
 <label>La tua lettura (cosa vedi e cosa pensi)</label><textarea id="cpN" rows="4" placeholder="es. muro grosso sull'ask, poco volume sotto, secondo me spinge giù; vorrei capire se regge"></textarea>
@@ -43,12 +49,13 @@ let L={AX:50,COB:46,SVP:92,CVD:120,TAX:22,VOL:46,FUT:.1};
 let ym="fisso",fixH=60,gran=0;const GR=[1,2,5,10,20,25,50,100];
 function stepNow(){if(gran)return gran;const px=pmain()/(v.p1-v.p0);return GR.find(a=>a*px>=16)||100}
 const agg=(cells,stp)=>{if(stp<=1)return cells;const m=new Map();for(const k of cells){const b=Math.floor(k[0]/stp)*stp;let o=m.get(b);if(!o){o=[b,0,k[2],0,0];m.set(b,o)}o[1]+=k[1];k[2]===1?o[4]+=k[1]:o[3]+=k[1]}for(const o of m.values())o[2]=o[4]>o[3]?1:(o[3]>0?0:o[2]);return [...m.values()]};
-const opt={candele:true,bolle:true,volume:true,tf:60000,nero:true,pres3:.9};
+const opt={candele:true,bolle:true,volume:true,tf:60000,nero:true,pres3:.9,lum:1,con:1,sens:1};
 try{const o=JSON.parse(localStorage.getItem("mappa_opt")||"{}");Object.assign(opt,o)}catch(e){}
 function saveOpt(){try{localStorage.setItem("mappa_opt",JSON.stringify(opt))}catch(e){}}
 // ---- palette calore: fondo ardesia -> blu -> arancio -> rosso -> giallo -> bianco
 let ST=[[0,[26,32,39]],[.14,[30,52,76]],[.34,[28,100,150]],[.52,[226,134,44]],[.72,[210,52,44]],[.88,[255,225,74]],[1,[255,251,232]]];
-const PAL=[];function buildPal(){PAL.length=0;ST[0][1]=opt.nero?[0,0,0]:[26,32,39];ST[1][1]=opt.nero?[14,34,72]:[30,52,76];for(let i=0;i<64;i++){const x=i/63;let a=ST[0],b=ST[ST.length-1];for(let k=0;k<ST.length-1;k++)if(x>=ST[k][0]&&x<=ST[k+1][0]){a=ST[k];b=ST[k+1];break}const f=(x-a[0])/((b[0]-a[0])||1);PAL.push("rgb("+[0,1,2].map(j=>Math.round(a[1][j]+(b[1][j]-a[1][j])*f)).join(",")+")")}}
+const PAL=[];function buildPal(){PAL.length=0;ST[0][1]=opt.nero?[0,0,0]:[26,32,39];ST[1][1]=opt.nero?[14,34,72]:[30,52,76];for(let i=0;i<64;i++){const x=i/63;let a=ST[0],b=ST[ST.length-1];for(let k=0;k<ST.length-1;k++)if(x>=ST[k][0]&&x<=ST[k+1][0]){a=ST[k];b=ST[k+1];break}const f=(x-a[0])/((b[0]-a[0])||1);PAL.push("rgb("+[0,1,2].map(j=>Math.min(255,Math.round((a[1][j]+(b[1][j]-a[1][j])*f)*(opt.lum||1)))).join(",")+")")}}
+const hv=v=>{v*=(opt.sens||1);v=(v-.4)*(opt.con||1)+.4;return v<=0?0:Math.min(63,Math.floor(v*63))};
 buildPal();const BG=()=>opt.nero?"#000":"#1a2027";
 let QREF=1,QMAX=20,svp=new Map(),svpMax=1;
 function prep(){
@@ -93,10 +100,10 @@ function renderBase(){
   const stp=stepNow(),sc=Math.pow(stp,.75);const lq=Math.log1p(QMAX/QREF);let i0=Math.max(0,lb(S,v.t0,s=>s.t)-1);
   for(let i=i0;i<S.length;i++){const s=S[i];if(s.t>v.t1)break;
     const xa=tx(s.t),xb=tx(i+1<S.length?S[i+1].t:s.t+500),ww=Math.max(1,xb-xa+.6);
-    for(const k of agg(s.c,stp)){if(k[0]+stp<v.p0||k[0]>v.p1)continue;const idx=Math.min(63,Math.floor(Math.log1p(k[1]/sc/QREF)/lq*63));if(idx<=0)continue;
+    for(const k of agg(s.c,stp)){if(k[0]+stp<v.p0||k[0]>v.p1)continue;const idx=hv(Math.log1p(k[1]/sc/QREF)/lq);if(idx<=0)continue;
       const y1=py(k[0]+stp),y0=py(k[0]);x.fillStyle=PAL[idx];x.fillRect(xa,y1,ww,y0-y1+.6)}}
   // barre del libro "nel futuro" (libro dell'ultimo campione)
-  if(S.length){const s=S[S.length-1],xf=tx(s.t)+2;if(xf<w){for(const k of agg(s.c,stp)){if(k[0]+stp<v.p0||k[0]>v.p1)continue;const idx=Math.min(63,Math.floor(Math.log1p(k[1]/sc/QREF)/lq*63));if(idx<=1)continue;
+  if(S.length){const s=S[S.length-1],xf=tx(s.t)+2;if(xf<w){for(const k of agg(s.c,stp)){if(k[0]+stp<v.p0||k[0]>v.p1)continue;const idx=hv(Math.log1p(k[1]/sc/QREF)/lq);if(idx<=1)continue;
       const y1=py(k[0]+stp),y0=py(k[0]);x.fillStyle=PAL[idx];const hh=Math.max(1.5,y0-y1-1);x.fillRect(xf,y1+.5,w-xf,hh)}}
     x.strokeStyle="#ffffffcc";x.lineWidth=1;x.beginPath();x.moveTo(xf-2,0);x.lineTo(xf-2,h);x.stroke()}
   x.strokeStyle="rgba(255,255,255,.09)";x.lineWidth=1;if(stp*pmain()/(v.p1-v.p0)>=7)for(let p=Math.ceil(v.p0/stp)*stp;p<v.p1;p+=stp){const Y=Math.round(py(p))+.5;x.beginPath();x.moveTo(0,Y);x.lineTo(w,Y);x.stroke()}
@@ -233,6 +240,12 @@ $("bBo").onclick=()=>{opt.bolle=!opt.bolle;saveOpt();sync();dirty=true;draw()};
 $("bVo").onclick=()=>{opt.volume=!opt.volume;saveOpt();sync();dirty=true;draw()};
 $("sTf").onchange=e=>{opt.tf=+e.target.value;saveOpt();dirty=true;draw()};
 $("bR").onclick=()=>{fit();draw()};
+function hpSync(){$("rl").value=Math.round(opt.lum*100);$("rc").value=Math.round(opt.con*100);$("rs").value=Math.round(opt.sens*100);$("vl").textContent=opt.lum.toFixed(2)+"×";$("vc").textContent=opt.con.toFixed(2)+"×";$("vs").textContent=opt.sens.toFixed(2)+"×";
+  const g=$("hg"),q=g.getContext("2d");for(let i=0;i<g.width;i++){q.fillStyle=PAL[hv(i/(g.width-1))];q.fillRect(i,0,1,14)}}
+function hpApply(){opt.lum=$("rl").value/100;opt.con=$("rc").value/100;opt.sens=$("rs").value/100;buildPal();hpSync();dirty=true;draw()}
+for(const id of ["rl","rc","rs"]){$(id).oninput=hpApply;$(id).onchange=saveOpt}
+$("hr").onclick=()=>{opt.lum=1;opt.con=1;opt.sens=1;buildPal();hpSync();saveOpt();dirty=true;draw()};
+$("bCo").onclick=()=>{const h=$("hp");h.hidden=!h.hidden;$("bCo").classList.toggle("on",!h.hidden);hpSync()};$("hx").onclick=()=>{$("hp").hidden=true;$("bCo").classList.remove("on")};
 function setGran(g){gran=g;$("bGl").textContent="Passo: "+(g?g+" $":"auto");dirty=true;draw()}
 function stepGran(d){let cur=stepNow(),i=GR.indexOf(cur);if(i<0)i=0;i=Math.max(0,Math.min(GR.length-1,i+d));setGran(GR[i])}
 $("bG1").onclick=()=>stepGran(-1);$("bG2").onclick=()=>stepGran(1);$("bGl").onclick=()=>setGran(0);$("bU").onclick=agganciaUltime;
