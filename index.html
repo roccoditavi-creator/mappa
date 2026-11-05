@@ -21,8 +21,8 @@ body{display:flex;flex-direction:column}#c{touch-action:none;display:block;width
 .rw{display:flex;gap:10px;align-items:center;margin:10px 0 4px}.box small{color:var(--mut)}
 @media(max-width:640px){#top h1{display:none}}
 </style></head><body>
-<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v23</small></h1><span class="t" id="tit"></span>
-<button id="bCa" class="on">Candele</button><select id="sTf"><option value="15000">15 s</option><option value="60000" selected>1 min</option><option value="300000">5 min</option></select>
+<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v24</small></h1><span class="t" id="tit"></span>
+<button id="bCa" class="on">Candele</button><select id="sTf"><option value="15000">15 s</option><option value="60000" selected>1 min</option><option value="300000">5 min</option><option value="900000">15 min</option><option value="1800000">30 min</option><option value="3600000">1 ora</option></select>
 <button id="bNe" class="on">Sfondo nero</button><button id="bCo" title="Intensità e contrasto della mappa di calore">Colori ▾</button><button id="bSg" class="on" title="Segnali: assorbimento, iceberg, muro ritirato, layering, sweep, tocco di livello">Segnali</button><button id="bRm" title="Dimensione minima del muro ritirato (R) mostrato: clic = cambia (10/15/20/30/50 BTC)">R ≥ 20</button><button id="bBo" class="on">Bolle</button><button id="bB1" title="Bolle più piccole (le bolle si raggruppano per timeframe e passo prezzo)">Bolle −</button><button id="bB2" title="Bolle più grandi">Bolle +</button><button id="bVo" class="on">Volume</button>
 <button id="bYm" title="Scala prezzo: Auto = si adatta ai dati visibili; Fisso = altezza fissa centrata sul prezzo; Libero = la sposti tu">Prezzo: Fisso</button><button id="bY1" title="Riduci altezza (più zoom sul prezzo)">Altezza −</button><button id="bY2" title="Aumenta altezza (meno zoom sul prezzo)">Altezza +</button>
 <button id="bG1" title="Granularità più fine: righe più sottili ([)">Passo −</button><button id="bGl" title="Passo del prezzo; clic = automatico">Passo: auto</button><button id="bG2" title="Granularità più larga: righe più spesse (])">Passo +</button>
@@ -130,7 +130,7 @@ function renderBase(){
       x.fillStyle=c.s>0?"rgba(86,224,132,.42)":"rgba(240,98,92,.42)";x.strokeStyle=c.s>0?"#56e084":"#f0625c";x.lineWidth=c.n>1?1.5:1;x.beginPath();x.arc(X,Y,r,0,6.2832);x.fill();x.stroke();
       if(r>13){x.fillStyle="#fff";x.font="11px system-ui";x.textAlign="center";x.fillText(c.q>=10?c.q.toFixed(0):c.q.toFixed(1),X,Y+4);x.textAlign="left"}hit.push({x:X,y:Y,r,c})}}
   // istogramma volume sul fondo dell'area prezzo
-  if(opt.volume&&cs.length){const mxv=Math.max(...cs.map(c=>c.b+c.s),1e-9),H0=L.VOL,cw=Math.max(2,(tx(v.t0+opt.tf)-tx(v.t0))*.8);
+  if(opt.volume&&cs.length){const mxv=Math.max(...cs.map(c=>c.b+c.s),1e-9),H0=L.VOL,cw=Math.max(2,Math.min(60,(tx(v.t0+opt.tf)-tx(v.t0))*.8));
     for(const c of cs){const X=tx(c.tl),hb=c.b/mxv*H0,hs=c.s/mxv*H0;x.fillStyle="rgba(229,96,90,.75)";x.fillRect(X-cw/2,h-hs,cw,hs);x.fillStyle="rgba(70,209,123,.75)";x.fillRect(X-cw/2,h-hs-hb,cw,hb)}}
   // segnali
   evHit=[];
