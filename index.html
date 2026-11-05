@@ -294,7 +294,7 @@ function liveStart(){stopWs();
 const TV={kr:"KRAKEN:XBTUSD",krf:"KRAKEN:XBTUSD",okp:"OKX:BTCUSDT.P",okx:"OKX:BTCUSDT.P",oks:"OKX:BTCUSDT"};
 $("bTv").onclick=()=>{const f=$("sFe").value,iv=({15000:"1",60000:"1",300000:"5"})[opt.tf]||"1";window.open("https://www.tradingview.com/chart/?symbol="+encodeURIComponent(TV[f])+"&interval="+iv,"_blank","noopener")};
 $("sFe").onchange=()=>{if(live)liveStart()};
-$("bL").onclick=function(){if(!live){this.classList.add("on");this.textContent="Replay";liveStart()}else{stopWs();live=false;this.classList.remove("on");this.textContent="Live";load(window.DATI3);draw()}};
+$("bL").onclick=function(){if(!live){this.classList.add("on");this.textContent="Replay";liveStart()}else{stopWs();live=false;this.classList.remove("on");this.textContent="Live";if(window.DATI3)load(window.DATI3);draw()}};
 // ---- Copia per Claude
 function snapshot(){
   const f1=x=>x.toFixed(1),f2=x=>x.toFixed(2),j0=lb(TR,v.t0,t=>t[0]);let j1=j0;while(j1<TR.length&&TR[j1][0]<=v.t1)j1++;
@@ -319,6 +319,6 @@ function snapshot(){
 function cpBuild(){const n=$("cpN").value.trim();$("cpT").value=(n?"LA MIA LETTURA: "+n+"\n\n":"")+snapshot()+"\n\nRichiesta: verifica se la mia lettura è corretta; confrontala con le registrazioni (casi simili, esiti a 1/5/15 min al netto dei costi, campione e baseline) e dimmi quali condizioni vedi tu."}
 $("bC").onclick=()=>{cpBuild();$("cp").hidden=false;$("cpM").textContent=""};$("cpX").onclick=()=>{$("cp").hidden=true};$("cpN").addEventListener("input",cpBuild);
 $("cpC").onclick=async()=>{cpBuild();const t=$("cpT");try{await navigator.clipboard.writeText(t.value);$("cpM").textContent="Copiato"}catch(e){t.removeAttribute("readonly");t.select();try{document.execCommand("copy");$("cpM").textContent="Copiato"}catch(_){$("cpM").textContent="Selezionato: copia a mano"}t.setAttribute("readonly","")}};
-sync();lay();load(window.DATI3);size();
+sync();lay();if(window.DATI3)load(window.DATI3);size();
 if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script></body></html>
