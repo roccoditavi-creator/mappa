@@ -21,7 +21,7 @@ body{display:flex;flex-direction:column}#c{touch-action:none;display:block;width
 .rw{display:flex;gap:10px;align-items:center;margin:10px 0 4px}.box small{color:var(--mut)}
 @media(max-width:640px){#top h1{display:none}}
 </style></head><body>
-<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v26</small></h1><span class="t" id="tit"></span>
+<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v27</small></h1><span class="t" id="tit"></span>
 <button id="bCa" class="on">Candele</button><select id="sTf"><option value="15000">15 s</option><option value="60000" selected>1 min</option><option value="300000">5 min</option><option value="900000">15 min</option><option value="1800000">30 min</option><option value="3600000">1 ora</option></select>
 <button id="bNe" class="on">Sfondo nero</button><button id="bCo" title="Intensità e contrasto della mappa di calore">Colori ▾</button><button id="bZn" class="on" title="Aree dense di liquidità (bande da 10 $ con molto volume nel libro, che durano almeno 30 s)">Aree</button><button id="bSg" class="on" title="Segnali: assorbimento, iceberg, muro ritirato, layering, sweep, tocco di livello">Segnali</button><button id="bRm" title="Dimensione minima del muro ritirato (R) mostrato: clic = cambia (10/15/20/30/50 BTC)">R ≥ 20</button><button id="bBo" class="on">Bolle</button><button id="bB1" title="Bolle più piccole (le bolle si raggruppano per timeframe e passo prezzo)">Bolle −</button><button id="bB2" title="Bolle più grandi">Bolle +</button><button id="bVo" class="on">Volume</button>
 <button id="bYm" title="Scala prezzo: Auto = si adatta ai dati visibili; Fisso = altezza fissa centrata sul prezzo; Libero = la sposti tu">Prezzo: Fisso</button><button id="bY1" title="Riduci altezza (più zoom sul prezzo)">Altezza −</button><button id="bY2" title="Aumenta altezza (meno zoom sul prezzo)">Altezza +</button>
@@ -76,7 +76,7 @@ function fmtHM(t){const d=new Date(t);return pd(d.getUTCHours())+":"+pd(d.getUTC
 function lay(){const n=innerWidth<700;L.FUT=1-Math.min(.95,Math.max(.6,opt.pres3||.9));L.AX=n?48:64;L.COB=n?0:100;L.SVP=n?60:130;L.CVD=n?90:120}
 function fit(){
   if(!S.length)return;
-  const last=S[S.length-1].t,span=live?150000:2400000;
+  const last=S[S.length-1].t,span=live?(S.length>1200?600000:150000):2400000;
   const t0=live?last-span:Math.max(S[0].t,last-span);v.t1=last+(last-t0)*L.FUT/(1-L.FUT);v.t0=t0;
   let lo=1e12,hi=0,j=lb(TR,v.t0,t=>t[0]);for(;j<TR.length;j++){const p=TR[j][1];if(p<lo)lo=p;if(p>hi)hi=p}
   if(lo>hi){lo=S[S.length-1].mid-40;hi=S[S.length-1].mid+40}
@@ -352,8 +352,23 @@ let ws=null,bids=new Map(),asks=new Map(),timer=null;
 let pingT=null;const FE={krf:"Kraken Futures PF_XBTUSD perp (libro completo)",kr:"Kraken BTC/USD spot (libro 100 livelli)",okp:"OKX BTC-USDT-SWAP perp (libro 400 livelli, contratti da 0.01 BTC)",okx:"OKX X-Perp BTC-USD_UM_XPERP-310404 (contratti da 0.0001 BTC)",oks:"OKX BTC-USDT spot (libro 400 livelli)"};
 function addTrade(t){TR.push(t);CV.push((CV.length?CV[CV.length-1]:0)+t[3]*t[2]);const b=Math.floor(t[1]);let o=svp.get(b);if(!o){o={b:0,s:0};svp.set(b,o)}t[3]>0?o.b+=t[2]:o.s+=t[2]}
 function stopWs(){if(ws){ws.onmessage=null;ws.onclose=null;try{ws.close()}catch(e){}ws=null}clearInterval(timer);clearInterval(pingT)}
-function liveStart(){stopWs();
-  S=[];TR=[];CV=[];EV=[];svp=new Map();bids.clear();asks.clear();live=true;sgReset();const fe=$("sFe").value;title="LIVE "+FE[fe];$("tit").textContent=title;clearInterval(pingT);
+// ---- sessione Live salvata nel browser (IndexedDB): con F5 il grafico riprende da dove era
+let savedT=0;
+const idbOpen=()=>new Promise((ok,ko)=>{try{const r=indexedDB.open("mappa_sess",1);r.onupgradeneeded=()=>r.result.createObjectStore("k");r.onsuccess=()=>ok(r.result);r.onerror=()=>ko(r.error)}catch(e){ko(e)}});
+const idbDo=(db,mode,fn)=>new Promise((ok,ko)=>{const t=db.transaction("k",mode),st=t.objectStore("k");const out=fn(st);t.oncomplete=()=>ok(out&&out.result!==undefined?out.result:out);t.onerror=()=>ko(t.error)});
+async function idbClear(){try{const db=await idbOpen();await idbDo(db,"readwrite",st=>st.clear());db.close()}catch(e){}}
+async function persist(){if(!live||!S.length)return;try{const i0=lb(S,savedT+1,s=>s.t);if(i0>=S.length&&savedT)return;const ns=S.slice(i0),j0=lb(TR,savedT+1,t=>t[0]),nt=TR.slice(j0),last=S[S.length-1].t,first=ns.length?ns[0].t:last;
+    const db=await idbOpen();await idbDo(db,"readwrite",st=>{st.put({s:ns,tr:nt,e:last},"c"+String(first).padStart(15,"0"));st.put({fe:$("sFe").value,live:true,last},"meta");
+      const cur=st.openCursor();cur.onsuccess=()=>{const c=cur.result;if(c){if(String(c.key)[0]==="c"&&c.value.e<S[0].t)c.delete();c.continue()}}});db.close();savedT=last}catch(e){}}
+async function setMetaOff(){try{const db=await idbOpen();await idbDo(db,"readwrite",st=>{st.put({live:false},"meta")});db.close()}catch(e){}}
+async function resumeLive(){try{const db=await idbOpen();const all=await idbDo(db,"readonly",st=>st.getAll()),keys=await idbDo(db,"readonly",st=>st.getAllKeys());db.close();
+    const mi=keys.indexOf("meta"),meta=mi>=0?all[mi]:null;if(!meta||!meta.live||Date.now()-meta.last>2*3600e3)return false;
+    const ch=[];keys.forEach((k,i)=>{if(String(k)[0]==="c")ch.push([k,all[i]])});ch.sort((a,b)=>a[0]<b[0]?-1:1);if(!ch.length)return false;
+    const S2=[],T2=[];for(const [,c] of ch){for(const x of c.s)S2.push(x);for(const x of c.tr)T2.push(x)}if(S2.length<2)return false;
+    $("sFe").value=meta.fe;S=S2;TR=T2;EV=[];const lastS=S[S.length-1];S.push({t:lastS.t+1,mid:lastS.mid,c:[],gap:true});savedT=lastS.t;
+    prep();sgAll();$("bL").classList.add("on");$("bL").textContent="Replay";liveStart(true);return true}catch(e){return false}}
+function liveStart(keep){stopWs();
+  if(!keep){S=[];TR=[];CV=[];svp=new Map();sgReset();savedT=0;idbClear()}EV=[];bids.clear();asks.clear();live=true;const fe=$("sFe").value;title="LIVE "+FE[fe];$("tit").textContent=title;clearInterval(pingT);
   if(fe==="kr"){ws=new WebSocket("wss://ws.kraken.com/v2");
   ws.onopen=()=>{ws.send(JSON.stringify({method:"subscribe",params:{channel:"book",symbol:["BTC/USD"],depth:100}}));ws.send(JSON.stringify({method:"subscribe",params:{channel:"trade",symbol:["BTC/USD"]}}))};
   ws.onmessage=e=>{const m=JSON.parse(e.data);
@@ -381,12 +396,12 @@ function liveStart(){stopWs();
     const now=Date.now();S.push({t:now,mid:(bb+ba)/2,c:[...cells.values()].map(o=>[o[0],+o[1].toFixed(2),o[2]])});
     sgStep(S[S.length-1]);if(S.length>7200)S.shift();while(TR.length>1&&TR[0][0]<S[0].t-5000){TR.shift();CV.shift()}
     if(S.length===1||S.length%30===0){const q=[];for(const s of S.slice(-200))for(const k of s.c)q.push(k[1]);q.sort((a,b)=>a-b);if(q.length){QREF=Math.max(.05,q[q.length>>1]);QMAX=Math.max(QREF*4,q[Math.floor(q.length*.995)])}}
-    if(S.length<3)fit();else if(follow){const span=v.t1-v.t0,fut=span*L.FUT;v.t1=now+fut;v.t0=v.t1-span;const c=(bb+ba)/2;if(c<v.p0+8||c>v.p1-8){const m=v.p1-v.p0;v.p0=c-m/2;v.p1=c+m/2}}
+    if(S.length<3||(keep&&!window.__fitDone&&(window.__fitDone=1)))fit();else if(follow){const span=v.t1-v.t0,fut=span*L.FUT;v.t1=now+fut;v.t0=v.t1-span;const c=(bb+ba)/2;if(c<v.p0+8||c>v.p1-8){const m=v.p1-v.p0;v.p0=c-m/2;v.p1=c+m/2}}
     if(ym!=="libero")applyY();dirty=true;draw()},500)}
 const TV={kr:"KRAKEN:XBTUSD",krf:"KRAKEN:XBTUSD",okp:"OKX:BTCUSDT.P",okx:"OKX:BTCUSDT.P",oks:"OKX:BTCUSDT"};
 $("bTv").onclick=()=>{const f=$("sFe").value,iv=({15000:"1",60000:"1",300000:"5"})[opt.tf]||"1";window.open("https://www.tradingview.com/chart/?symbol="+encodeURIComponent(TV[f])+"&interval="+iv,"_blank","noopener")};
 $("sFe").onchange=()=>{if(live)liveStart()};
-$("bL").onclick=function(){if(!live){this.classList.add("on");this.textContent="Replay";liveStart()}else{stopWs();live=false;this.classList.remove("on");this.textContent="Live";if(window.DATI3)load(window.DATI3);draw()}};
+$("bL").onclick=function(){if(!live){this.classList.add("on");this.textContent="Replay";liveStart()}else{stopWs();live=false;setMetaOff();this.classList.remove("on");this.textContent="Live";if(window.DATI3)load(window.DATI3);draw()}};
 // ---- Copia per Claude
 function snapshot(){
   const f1=x=>x.toFixed(1),f2=x=>x.toFixed(2),j0=lb(TR,v.t0,t=>t[0]);let j1=j0;while(j1<TR.length&&TR[j1][0]<=v.t1)j1++;
@@ -413,6 +428,6 @@ function snapshot(){
 function cpBuild(){const n=$("cpN").value.trim();$("cpT").value=(n?"LA MIA LETTURA: "+n+"\n\n":"")+snapshot()+"\n\nRichiesta: verifica se la mia lettura è corretta; confrontala con le registrazioni (casi simili, esiti a 1/5/15 min al netto dei costi, campione e baseline) e dimmi quali condizioni vedi tu."}
 $("bC").onclick=()=>{cpBuild();$("cp").hidden=false;$("cpM").textContent=""};$("cpX").onclick=()=>{$("cp").hidden=true};$("cpN").addEventListener("input",cpBuild);
 $("cpC").onclick=async()=>{cpBuild();const t=$("cpT");try{await navigator.clipboard.writeText(t.value);$("cpM").textContent="Copiato"}catch(e){t.removeAttribute("readonly");t.select();try{document.execCommand("copy");$("cpM").textContent="Copiato"}catch(_){$("cpM").textContent="Selezionato: copia a mano"}t.setAttribute("readonly","")}};
-sync();lay();if(window.DATI3)load(window.DATI3);size();
+sync();lay();if(window.DATI3)load(window.DATI3);size();resumeLive();setInterval(persist,5000);addEventListener("pagehide",persist);document.addEventListener("visibilitychange",()=>{if(document.hidden)persist()});
 if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script></body></html>
