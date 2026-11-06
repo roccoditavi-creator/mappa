@@ -16,7 +16,7 @@ body{display:flex;flex-direction:column}#c{touch-action:none;display:block;width
 #hq{position:fixed;left:8px;bottom:34px;z-index:7;width:28px;height:28px;border-radius:50%;padding:0;font-weight:700;font-size:15px;line-height:26px;text-align:center;background:#27506e;border:1px solid var(--acc)}
 #hl{position:fixed;left:8px;bottom:68px;z-index:7;width:min(460px,calc(100vw - 16px));max-height:calc(100vh - 130px);overflow:auto;background:var(--panel);border:1px solid var(--ln);border-radius:10px;padding:10px 12px;box-shadow:0 6px 24px #000a;font-size:12px}#hl[hidden]{display:none}
 #hl h4{margin:10px 0 4px;color:var(--acc);font-size:12px;letter-spacing:.04em;text-transform:uppercase}#hl h4:first-child{margin-top:0}#hl .r{display:flex;gap:8px;align-items:flex-start;margin:3px 0}#hl .k{flex:none;min-width:26px;height:20px;border-radius:10px;background:#0b0f14;border:1.5px solid var(--buy);color:var(--buy);text-align:center;font-weight:700;line-height:17px;padding:0 4px}#hl .k.s{border-color:var(--sell);color:var(--sell)}#hl .k.n{border-color:var(--ln);color:var(--fg)}#hl small{color:var(--mut)}
-#sp{position:fixed;top:96px;right:10px;z-index:8;background:var(--panel);border:1px solid var(--ln);border-radius:10px;padding:10px 12px;width:290px;box-shadow:0 6px 24px #000a;font-size:12px}#sp[hidden]{display:none}#sp label{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:6px 0;color:var(--mut)}#sp input[type=number]{width:70px;background:#12171c;color:var(--fg);border:1px solid var(--ln);border-radius:6px;padding:3px 5px}#sp .rw{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+#sp,#pp{position:fixed;top:96px;right:10px;z-index:8;background:var(--panel);border:1px solid var(--ln);border-radius:10px;padding:10px 12px;width:290px;box-shadow:0 6px 24px #000a;font-size:12px}#sp[hidden],#pp[hidden]{display:none}#sp label,#pp label{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:6px 0;color:var(--mut)}#sp input[type=number],#pp input[type=number],#pp select{width:70px;background:#12171c;color:var(--fg);border:1px solid var(--ln);border-radius:6px;padding:3px 5px}#sp .rw,#pp .rw{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 #toast{position:fixed;top:100px;left:50%;transform:translateX(-50%);z-index:9;display:flex;flex-direction:column;gap:6px;pointer-events:none;align-items:center}#toast div{background:#12171cee;border:1px solid var(--acc);border-radius:8px;padding:6px 12px;font-size:13px;box-shadow:0 4px 16px #000a}#toast .tec{border-color:var(--sell);color:#ffb3ae}
 #tip{position:fixed;pointer-events:none;background:#12171cee;border:1px solid var(--ln);border-radius:6px;padding:6px 8px;font-size:12px;display:none;white-space:pre;z-index:5}
 #cp{position:fixed;inset:0;background:#000a;z-index:9;display:flex;align-items:flex-end;justify-content:center}#cp[hidden]{display:none}
@@ -25,11 +25,11 @@ body{display:flex;flex-direction:column}#c{touch-action:none;display:block;width
 .box textarea{width:100%;background:#12171c;color:var(--fg);border:1px solid var(--ln);border-radius:8px;padding:8px;font:12px/1.4 ui-monospace,Consolas,monospace}
 .rw{display:flex;gap:10px;align-items:center;margin:10px 0 4px}.box small{color:var(--mut)}
 @media(max-width:640px){#top h1{display:none}}
-</style></head><body>
-<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v30</small></h1><span class="t" id="tit"></span>
+#pp{width:340px;max-height:calc(100vh - 110px);overflow:auto}#pp textarea{width:100%;box-sizing:border-box;background:#12171c;color:var(--fg);border:1px solid var(--ln);border-radius:6px;font:11px ui-monospace,Consolas,monospace;margin-top:6px}#pp table{width:100%;border-collapse:collapse;margin:6px 0;font-size:11px}#pp td,#pp th{padding:2px 3px;text-align:right;border-bottom:1px solid var(--ln)}#pp td:first-child,#pp th:first-child{text-align:left}#pp .vd{margin:6px 0;padding:6px 8px;border-radius:6px;background:#12171c;line-height:1.4}</style></head><body>
+<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v31</small></h1><span class="t" id="tit"></span>
 <button id="bCa" class="on">Candele</button><select id="sTf"><option value="15000">15 s</option><option value="60000" selected>1 min</option><option value="300000">5 min</option><option value="900000">15 min</option><option value="1800000">30 min</option><option value="3600000">1 ora</option></select>
 <button id="bNe" class="on">Sfondo nero</button><button id="bCo" title="Intensità e contrasto della mappa di calore">Colori ▾</button><button id="bZn" class="on" title="Aree dense di liquidità (bande da 10 $ con molto volume nel libro, che durano almeno 30 s)">Aree</button><button id="bSn" class="on" title="Allarmi sonori: liquidazioni grosse, prezzo vicino ad aree dense, sweep enormi, feed fermo">Suoni ▾</button><button id="bLq" class="on" title="Liquidazioni reali (Bybit, OKX, Binance): rombo rosso = long liquidato, verde = short liquidato">Liq.</button><button id="bSt" class="on" title="Linee dei livelli dove probabilmente stanno gli stop (massimi/minimi recenti e numeri tondi): è un'inferenza">Stop?</button><button id="bSg" class="on" title="Segnali: assorbimento, iceberg, muro ritirato, layering, sweep, tocco di livello">Segnali</button><button id="bRm" title="Dimensione minima del muro ritirato (R) mostrato: clic = cambia (10/15/20/30/50 BTC)">R ≥ 20</button><button id="bBo" class="on">Bolle</button><button id="bB1" title="Bolle più piccole (le bolle si raggruppano per timeframe e passo prezzo)">Bolle −</button><button id="bB2" title="Bolle più grandi">Bolle +</button><button id="bVo" class="on">Volume</button>
-<button id="bYm" title="Scala prezzo: Auto = si adatta ai dati visibili; Fisso = altezza fissa centrata sul prezzo; Libero = la sposti tu">Prezzo: Fisso</button><button id="bY1" title="Riduci altezza (più zoom sul prezzo)">Altezza −</button><button id="bY2" title="Aumenta altezza (meno zoom sul prezzo)">Altezza +</button>
+<button id="bPv" class="on" title="Previsioni direzionali (freccia verde su, rossa giù, grigia neutra) con verifica automatica dopo l'orizzonte scelto">Previsioni ▾</button><button id="bYm" title="Scala prezzo: Auto = si adatta ai dati visibili; Fisso = altezza fissa centrata sul prezzo; Libero = la sposti tu">Prezzo: Fisso</button><button id="bY1" title="Riduci altezza (più zoom sul prezzo)">Altezza −</button><button id="bY2" title="Aumenta altezza (meno zoom sul prezzo)">Altezza +</button>
 <button id="bG1" title="Granularità più fine: righe più sottili ([)">Passo −</button><button id="bGl" title="Passo del prezzo; clic = automatico">Passo: auto</button><button id="bG2" title="Granularità più larga: righe più spesse (])">Passo +</button>
 <button id="bR">Vista intera</button><button id="bU" title="Ricentra il grafico su prezzo e ultime transazioni (tasto C)">Ricentra</button><select id="sFe" title="Sorgente dati del Live"><option value="kr">Kraken spot</option><option value="krf">Kraken futures PF_XBTUSD</option><option value="okp">OKX perp BTC-USDT</option><option value="okx">OKX X-Perp BTC-USD</option><option value="oks">OKX spot BTC-USDT</option></select><button id="bL">Live</button><button id="bTv" title="Apre lo stesso strumento su TradingView (nuova scheda)">TradingView ↗</button><button id="bC">Copia per Claude</button></div>
 <div id="hp" hidden><b>Mappa di calore</b><canvas id="hg" width="240" height="14"></canvas>
@@ -38,6 +38,14 @@ body{display:flex;flex-direction:column}#c{touch-action:none;display:block;width
 <label>Sensibilità (verso destra: anche i livelli piccoli si accendono) <span id="vs"></span></label><input type="range" id="rs" min="25" max="400" step="5">
 <div class="rw"><button id="hr">Ripristina</button><button id="hx">Chiudi</button></div></div>
 <canvas id="c"></canvas><div id="tip"></div><button id="hq" title="Legenda: significato di lettere e simboli">?</button><div id="hl" hidden></div><div id="toast"></div><div id="sp" hidden><b>Allarmi sonori</b><label><span>Suoni attivi</span><input type="checkbox" id="snA"></label><label><span>Liquidazione singola ≥ (BTC)</span><input type="number" id="snLs" min="0.1" step="0.5"></label><label><span>Liquidazioni in 30 s ≥ (BTC)</span><input type="number" id="snLt" min="0.5" step="1"></label><label><span>Area densa minima (BTC)</span><input type="number" id="snZm" min="10" step="5"></label><label><span>Avviso se prezzo a meno di ($)</span><input type="number" id="snZd" min="2" step="1"></label><label><span>Sweep minimo in 3 s (BTC)</span><input type="number" id="snSw" min="0.5" step="0.5"></label><div class="rw"><button id="snP1">Prova liquidazione</button><button id="snP2">Prova area</button><button id="snP3">Prova sweep</button><button id="snP4">Prova tecnico</button></div><small>Un suono ogni 20 s al massimo (il tecnico sempre). Gli avvisi compaiono anche scritti. Un suono vuol dire "guarda", non è un segnale di trading.</small></div>
+<div id="pp" hidden><b>Previsioni e verifica</b>
+<label><span>Previsioni attive (solo in Live)</span><input type="checkbox" id="pvA"></label>
+<label><span>Orizzonte (minuti)</span><select id="pvH"><option value="1">1</option><option value="5">5</option><option value="15">15</option><option value="30">30</option></select></label>
+<label><span>Costo andata e ritorno (%)</span><input type="number" id="pvC" min="0" step="0.01"></label>
+<div id="pvS"></div>
+<div class="rw"><button id="pvE">Copia registro per Claude</button><button id="pvD">Scarica CSV</button><button id="pvR">Mostra regole</button><button id="pvI">Importa regole</button><button id="pvZ">Azzera registro</button></div>
+<textarea id="pvT" rows="6" hidden></textarea><span id="pvM" style="color:var(--mut)"></span>
+<small>Una previsione ogni N minuti a orario fisso (non guarda i risultati prima di farla). Le regole iniziali sono ipotesi, non provate. Il registro resta nel browser. Ogni cambio di regole è una nuova versione e si valuta solo sulle previsioni nuove.</small></div>
 <div id="cp" hidden><div class="box"><div class="hd"><b>Copia per Claude</b><button id="cpX">Chiudi</button></div>
 <label>La tua lettura (cosa vedi e cosa pensi)</label><textarea id="cpN" rows="4" placeholder="es. muro grosso sull'ask, poco volume sotto, secondo me spinge giù; vorrei capire se regge"></textarea>
 <label>Testo pronto da incollare nella chat (dati della finestra visibile)</label><textarea id="cpT" rows="9" readonly></textarea>
@@ -54,7 +62,7 @@ let L={AX:50,COB:46,SVP:92,CVD:120,TAX:22,VOL:46,FUT:.1};
 let ym="fisso",fixH=60,gran=0;const GR=[1,2,3,4,5,10,20,25,50,100];
 function stepNow(){if(gran)return gran;const px=pmain()/(v.p1-v.p0);return GR.find(a=>a*px>=16)||100}
 const agg=(cells,stp)=>{if(stp<=1)return cells;const m=new Map();for(const k of cells){const b=Math.floor(k[0]/stp)*stp;let o=m.get(b);if(!o){o=[b,0,k[2],0,0];m.set(b,o)}o[1]+=k[1];k[2]===1?o[4]+=k[1]:o[3]+=k[1]}for(const o of m.values())o[2]=o[4]>o[3]?1:(o[3]>0?0:o[2]);return [...m.values()]};
-const opt={candele:true,bolle:true,volume:true,tf:60000,nero:true,pres3:.9,lum:1,con:1,sens:1,bub:1,segn:true,rmin:20,zone:true,liq:true,stp:true,snd:true,lqS:5,lqT:15,zMin:60,zDist:12,swMin:5};
+const opt={candele:true,bolle:true,volume:true,tf:60000,nero:true,pres3:.9,lum:1,con:1,sens:1,bub:1,segn:true,rmin:20,zone:true,liq:true,stp:true,snd:true,lqS:5,lqT:15,zMin:60,zDist:12,swMin:5,pvOn:true,pvH:5,pvCost:.10,pvP:{ver:"v1-ipotesi",th:1,w:{flow:1,book:1,A:1,I:1,J:.5,S:1,X:1,R:.5,L:.5,T:.5,liq:0}}};
 try{const o=JSON.parse(localStorage.getItem("mappa_opt")||"{}");Object.assign(opt,o)}catch(e){}
 function saveOpt(){try{localStorage.setItem("mappa_opt",JSON.stringify(opt))}catch(e){}}
 // ---- palette calore: fondo ardesia -> blu -> arancio -> rosso -> giallo -> bianco
@@ -160,6 +168,15 @@ function renderBase(){
     for(const q of LQ){const X=tx(q.t),Y=py(q.p);if(X<-14||X>w+14||Y<-14||Y>h+14)continue;const r=Math.min(18,5+3.4*Math.log1p(q.q/.05)),col=q.lg?"#ff3d5a":"#2ef2a0";
       x.fillStyle=col+"cc";x.strokeStyle="#fff";x.lineWidth=1.5;x.beginPath();x.moveTo(X,Y-r);x.lineTo(X+r,Y);x.lineTo(X,Y+r);x.lineTo(X-r,Y);x.closePath();x.fill();x.stroke();
       if(q.q>=.5){x.fillStyle="#fff";x.fillText(q.q.toFixed(q.q>=10?0:1),X,Y+3.5)}evHit.push({x:X,y:Y,r:r+3,lq:q})}x.textAlign="left"}
+  // previsioni: freccia verde su, rossa giù, grigia neutra; dopo l'orizzonte compare l'esito
+  if(opt.pvOn&&PV.length){x.textAlign="center";x.font="bold 10px system-ui";
+    for(const r of PV){const X=tx(r.t),Y=py(r.p);if(X<-30||X>w+60||Y<-60||Y>h+60)continue;const col=r.dir>0?"#2ee66b":r.dir<0?"#ff5a52":"#9aa5b1",sg=r.dir>0?-1:1,res=r.res;
+      x.strokeStyle=col;x.fillStyle=col;x.lineWidth=2;
+      if(r.dir!==0){x.beginPath();x.moveTo(X,Y);x.lineTo(X,Y+sg*14);x.stroke();const b=Y+sg*14,tp=Y+sg*38;x.beginPath();x.moveTo(X,tp);x.lineTo(X-12,b);x.lineTo(X+12,b);x.closePath();if(res&&!res.void)x.fill();else{x.fillStyle=col+"44";x.fill();x.stroke()}
+        evHit.push({x:X,y:(b+tp)/2,r:14,pv:r})}
+      else{x.beginPath();x.moveTo(X,Y-6);x.lineTo(X+6,Y);x.lineTo(X,Y+6);x.lineTo(X-6,Y);x.closePath();if(res&&!res.void)x.fill();else x.stroke();evHit.push({x:X,y:Y,r:10,pv:r})}
+      if(res&&!res.void){x.fillStyle="#e6edf5";const yy=r.dir>0?Y-46:r.dir<0?Y+54:Y-12;x.fillText((res.ok?"✓ ":"✗ ")+(res.ret>=0?"+":"")+res.ret.toFixed(2)+"%",X,yy)}}
+    x.textAlign="left"}
   x.restore();
   // asse prezzi + griglia
   x.fillStyle="#222a33";x.fillRect(w,0,L.AX,h);x.fillStyle="#c5d1de";x.font="13px system-ui";
@@ -238,6 +255,7 @@ function showTip(x,y,cxp,cyp){
   cross={x,y};draw();const t=xt(x),p=yp(y);let txt=fmtT(t,true)+" UTC\nprezzo "+p.toFixed(1);
   const si=Math.max(0,lb(S,t,s=>s.t)-1);if(S[si]){const bn=Math.floor(p),c=S[si].c.find(k=>k[0]===bn);txt+="\nlibro in questo $: "+(c?c[1].toFixed(2)+" BTC ("+(c[2]?"vendita":"acquisto")+")":"—")}
   for(const o of evHit){if(o.lq&&Math.hypot(o.x-x,o.y-y)<=o.r+2){const q=o.lq;txt+="\n— LIQUIDAZIONE "+q.v+": "+(q.lg?"LONG liquidato (vendita forzata)":"SHORT liquidato (acquisto forzato)")+"\n  "+q.q.toFixed(3)+" BTC @ "+q.p.toFixed(1)+" ≈ "+Math.round(q.q*q.p).toLocaleString("it-IT")+" $ alle "+fmtT(q.t,true);break}
+    if(o.pv&&Math.hypot(o.x-x,o.y-y)<=o.r+2){txt+="\n"+pvText(o.pv);break}
     if(o.e&&Math.hypot(o.x-x,o.y-y)<=o.r+2){const e=o.e;txt+="\n— SEGNALE "+e.kind+": "+KIND[e.kind]+"\n  attesa: "+(e.dir>0?"SU":"GIÙ")+" | "+(e.kind==="X"?"volume oltre il livello ":"dimensione ")+e.size.toFixed(2)+" BTC"+(e.conMuro!==undefined?" | con muro: "+(e.conMuro?"sì":"no"):"")+(e.liv?" | livello: "+e.liv:"")+"\n  punteggio parziale "+e.score+"/6 (confluenza "+e.parts.confluenza+", livello "+e.parts.livello+", libro "+e.parts.libro+")"+(e.cand?" — CANDIDATO":"")+"\n  (approssimato sulla mappa; il registro ufficiale è sul VPS)";break}}
   for(const o of hit){if(Math.hypot(o.x-x,o.y-y)<=Math.max(o.r,12)){txt+="\n— bolla: "+o.c.q.toFixed(3)+" BTC, "+(o.c.s>0?"acquisto":"vendita")+" aggressiva, "+o.c.n+" trade";break}}
   tip.textContent=txt;tip.style.display="block";tip.style.left=Math.max(4,Math.min(cxp+14,innerWidth-250))+"px";tip.style.top=Math.max(48,Math.min(cyp+14,innerHeight-110))+"px"}
@@ -284,6 +302,11 @@ cv.addEventListener("pointerleave",e=>{if(e.pointerType==="mouse"){cross=null;ti
   R("◆","","Rombo verde: short liquidato","Acquisto forzato. Non sono tutte le liquidazioni del mercato.")+
   R("- -","n","Linee \"stop?\"","Massimi/minimi 15 e 60 min e numeri tondi dove di solito stanno gli stop. Arancione sopra, azzurro sotto. È un\'inferenza, non un dato.")+
   R("Σ","n","Aree (bande)","Bande da 10 $ con molta liquidità (≥ max(30 BTC, 5× mediana), ≥ 30 s). Rosso = ask, verde = bid. Bordo pieno = ancora attiva; tratteggiato = finita (ritirata o attraversata).")+
+  '<h4>Previsioni (tasto Previsioni)</h4>'+
+  R("▲","","Freccia verde in alto","Previsione: prezzo più alto tra N minuti oltre il costo. Piena = verificata, trasparente = in attesa. Dopo l\'orizzonte compare ✓/✗ e il movimento reale.")+
+  R("▼","s","Freccia rossa in basso","Previsione: prezzo più basso tra N minuti.")+
+  R("◆","n","Rombo grigio","Neutra: nessuna indicazione abbastanza forte. Vale ✓ se il prezzo si è mosso meno del costo.")+
+  '<small>Le regole iniziali sono ipotesi non provate. Il pannello mostra quanto spesso ci azzecca contro il caso e contro i costi.</small>'+
   '<h4>Allarmi sonori (tasto Suoni)</h4>'+
   R("♪","","Liquidazione grossa","Singola ≥ soglia o raffica in 30 s.")+R("♪","","Prezzo vicino ad area densa / area finita","Una volta per area.")+R("♪","s","Sweep enorme","Trade aggressivi in 3 s sopra il 99,5° percentile della sessione e sopra il minimo scelto.")+R("♪","s","Feed fermo","Nessun dato da più di 10 s: le letture non sono affidabili.")+
   '<h4>Resto del grafico</h4>'+
@@ -482,7 +505,7 @@ function liveStart(keep){stopWs();lqStart();lastTick=Date.now();SWH=[];
     for(const [p,q] of bids)if(p>=bb-80){const k=Math.floor(p)+"b",o=cells.get(k)||[Math.floor(p),0,0];o[1]+=q;cells.set(k,o)}
     for(const [p,q] of asks)if(p<=ba+80){const k=Math.floor(p)+"a",o=cells.get(k)||[Math.floor(p),0,1];o[1]+=q;cells.set(k,o)}
     const now=Date.now();alarmTick((bb+ba)/2,now);S.push({t:now,mid:(bb+ba)/2,c:[...cells.values()].map(o=>[o[0],+o[1].toFixed(2),o[2]])});
-    sgStep(S[S.length-1]);if(S.length>7200)S.shift();while(TR.length>1&&TR[0][0]<S[0].t-5000){TR.shift();CV.shift()}
+    sgStep(S[S.length-1]);pvTick(now);if(S.length>7200)S.shift();while(TR.length>1&&TR[0][0]<S[0].t-5000){TR.shift();CV.shift()}
     if(S.length===1||S.length%30===0){const q=[];for(const s of S.slice(-200))for(const k of s.c)q.push(k[1]);q.sort((a,b)=>a-b);if(q.length){QREF=Math.max(.05,q[q.length>>1]);QMAX=Math.max(QREF*4,q[Math.floor(q.length*.995)])}}
     if(S.length<3||(keep&&!window.__fitDone&&(window.__fitDone=1)))fit();else if(follow){const span=v.t1-v.t0,fut=span*L.FUT;v.t1=now+fut;v.t0=v.t1-span;const c=(bb+ba)/2;if(c<v.p0+8||c>v.p1-8){const m=v.p1-v.p0;v.p0=c-m/2;v.p1=c+m/2}}
     if(ym!=="libero")applyY();dirty=true;draw()},500)}
@@ -490,6 +513,64 @@ const TV={kr:"KRAKEN:XBTUSD",krf:"KRAKEN:XBTUSD",okp:"OKX:BTCUSDT.P",okx:"OKX:BT
 $("bTv").onclick=()=>{const f=$("sFe").value,iv=({15000:"1",60000:"1",300000:"5"})[opt.tf]||"1";window.open("https://www.tradingview.com/chart/?symbol="+encodeURIComponent(TV[f])+"&interval="+iv,"_blank","noopener")};
 $("sFe").onchange=()=>{if(live)liveStart()};
 $("bL").onclick=function(){if(!live){this.classList.add("on");this.textContent="Replay";liveStart()}else{stopWs();live=false;setMetaOff();this.classList.remove("on");this.textContent="Live";if(window.DATI3)load(window.DATI3);draw()}};
+// ---- previsioni (v31): una previsione a orario fisso, verificata dopo l'orizzonte; registro nel browser
+let PV=[],PVslot=-1;
+try{PV=JSON.parse(localStorage.getItem("mappa_pv")||"[]")}catch(e){PV=[]}
+function pvSave(){try{if(PV.length>3000)PV=PV.slice(-3000);localStorage.setItem("mappa_pv",JSON.stringify(PV))}catch(e){}}
+const pvF=(x,n)=>x.toFixed(n===undefined?2:n);
+function pvFeat(t,s){const mid=s.mid,f={};
+  const j0=lb(TR,t-300000,x=>x[0]);let D=0,V=0;for(let j=j0;j<TR.length;j++){D+=TR[j][3]*TR[j][2];V+=TR[j][2]}f.flow=V>0?D/V:0;
+  let bq=0,aq=0;for(const k of s.c)if(Math.abs(k[0]-mid)<=30){k[2]?aq+=k[1]:bq+=k[1]}f.book=bq+aq>0?(bq-aq)/(bq+aq):0;
+  for(const k of ["A","I","J","S","X","R","L","T"])f[k]=0;
+  for(const e of EVS){if(e.t<t-300000||e.t>t||!evOk(e)||f[e.kind]===undefined)continue;f[e.kind]=Math.max(-1,Math.min(1,f[e.kind]+e.dir*.5))}
+  let sl=0,ll=0;for(const q of LQ){if(q.t<t-300000||q.t>t)continue;q.lg?ll+=q.q:sl+=q.q}f.liq=sl+ll>0?(sl-ll)/(sl+ll):0;
+  for(const k in f)f[k]=+f[k].toFixed(3);return f}
+function pvMake(now){const s=S[S.length-1],P=opt.pvP,f=pvFeat(now,s);let sc=0;for(const k in P.w)sc+=(P.w[k]||0)*(f[k]||0);
+  const dir=Math.abs(sc)>=P.th?Math.sign(sc):0;PV.push({t:now,p:s.mid,dir,sc:+sc.toFixed(3),f,ver:P.ver,h:opt.pvH,fe:$("sFe").value,res:null});pvSave();dirty=true}
+function pvTick(now){if(!live)return;
+  // verifica delle previsioni scadute
+  let ch=false;for(const r of PV){if(r.res)continue;const tg=r.t+r.h*60000;if(now<tg)continue;
+    const last=S[S.length-1];if(!last||last.t<tg-2000||now-tg>120000||r.fe!==$("sFe").value){r.res={void:true};ch=true;continue}
+    const p1=midAt(tg),ret=(p1-r.p)/r.p*100,c=opt.pvCost;let ok,net=null;
+    if(r.dir!==0){ok=Math.sign(ret)===r.dir;net=r.dir*ret-c}else ok=Math.abs(ret)<c;
+    r.res={p1,ret:+ret.toFixed(4),ok,net:net===null?null:+net.toFixed(4)};ch=true;
+    toast("Previsione "+fmtT(r.t,false)+" "+(r.dir>0?"▲":r.dir<0?"▼":"◆")+" → "+(ok?"✓":"✗")+" "+(ret>=0?"+":"")+ret.toFixed(2)+"%")}
+  if(ch){pvSave();dirty=true;if(!$("pp").hidden)pvPanel()}
+  if(!opt.pvOn||S.length<120)return;
+  const slot=Math.floor(now/(opt.pvH*60000));if(PVslot<0){PVslot=slot;return}  // la prima fetta (parziale) non genera previsioni
+  if(slot!==PVslot){PVslot=slot;pvMake(now);if(!$("pp").hidden)pvPanel()}}
+function pvText(r){const dd=r.dir>0?"SU":r.dir<0?"GIÙ":"NEUTRA";let t="— PREVISIONE "+dd+" ("+r.h+" min, regole "+r.ver+") alle "+fmtT(r.t,true)+" @ "+pvF(r.p,1)+"\n  punteggio "+pvF(r.sc)+" | "+Object.entries(r.f).filter(([k,x])=>x!==0).map(([k,x])=>k+" "+x).join(", ");
+  if(r.res&&!r.res.void)t+="\n  esito: "+(r.res.ok?"ESATTA":"SBAGLIATA")+", prezzo "+pvF(r.res.p1,1)+" ("+(r.res.ret>=0?"+":"")+pvF(r.res.ret)+"%)"+(r.res.net!==null?", netto dei costi "+(r.res.net>=0?"+":"")+pvF(r.res.net)+"%":"");
+  else if(r.res&&r.res.void)t+="\n  non verificabile (dati mancanti)";else t+="\n  in attesa della verifica";return t}
+function wilson(k,n){if(!n)return[0,0];const z=1.96,p=k/n,d=1+z*z/n,c=p+z*z/(2*n),m=z*Math.sqrt(p*(1-p)/n+z*z/(4*n*n));return[(c-m)/d,(c+m)/d]}
+function pvStats(list){const R=list.filter(r=>r.res&&!r.res.void),D=R.filter(r=>r.dir!==0),N=R.filter(r=>r.dir===0),k=D.filter(r=>r.res.ok).length,up=R.filter(r=>r.res.ret>0).length,mv=R.filter(r=>r.res.ret!==0).length;
+  const net=D.reduce((a,r)=>a+r.res.net,0),gross=D.reduce((a,r)=>a+r.dir*r.res.ret,0);
+  return{n:R.length,nd:D.length,nn:N.length,k,hit:D.length?k/D.length:0,ci:wilson(k,D.length),base:mv>=30?Math.max(up,mv-up)/mv:.5,net:D.length?net/D.length:0,gross:D.length?gross/D.length:0,flat:N.length?N.filter(r=>r.res.ok).length/N.length:0}}
+function pvPanel(){const vers=[...new Set(PV.map(r=>r.ver))],cur=opt.pvP.ver;let h="<table><tr><th>regole</th><th>dir.</th><th>neutre</th><th>esatte</th><th>netto/trade</th></tr>";
+  for(const vv of vers){const a=pvStats(PV.filter(r=>r.ver===vv));h+="<tr><td>"+vv+(vv===cur?" ●":"")+"</td><td>"+a.nd+"</td><td>"+a.nn+"</td><td>"+(a.nd?(100*a.hit).toFixed(0)+"% ["+(100*a.ci[0]).toFixed(0)+"–"+(100*a.ci[1]).toFixed(0)+"]":"—")+"</td><td>"+(a.nd?(a.net>=0?"+":"")+a.net.toFixed(3)+"%":"—")+"</td></tr>"}
+  h+="</table>";const a=pvStats(PV.filter(r=>r.ver===cur));let vd;
+  if(a.nd<200)vd="Campione troppo piccolo ("+a.nd+" direzionali con queste regole, ne servono almeno 200): nessuna conclusione. Il caso puro azzecca circa il "+(100*a.base).toFixed(0)+"% (la direzione più frequente nel campione).";
+  else if(a.ci[0]>a.base&&a.net>0)vd="Possibile vantaggio con queste regole: esatte "+(100*a.hit).toFixed(0)+"% (limite basso "+(100*a.ci[0]).toFixed(0)+"%) sopra il caso "+(100*a.base).toFixed(0)+" % e netto positivo. Da confermare su previsioni NUOVE prima di fidarsi.";
+  else vd="Nessun vantaggio dimostrato: esatte "+(100*a.hit).toFixed(0)+"% contro caso "+(100*a.base).toFixed(0)+"%, netto "+(a.net>=0?"+":"")+a.net.toFixed(3)+"% a trade dopo costi "+opt.pvCost.toFixed(2)+"%.";
+  h+='<div class="vd">'+vd+'</div><small>Verificate: '+a.n+" · in attesa: "+PV.filter(r=>!r.res).length+" · neutre corrette (mosso meno del costo): "+(a.nn?(100*a.flat).toFixed(0)+"%":"—")+" · movimento lordo medio nella direzione prevista: "+(a.nd?(a.gross>=0?"+":"")+a.gross.toFixed(3)+"%":"—")+"</small>";
+  $("pvS").innerHTML=h}
+function pvSync(){$("pvA").checked=!!opt.pvOn;$("pvH").value=String(opt.pvH);$("pvC").value=opt.pvCost;$("bPv").classList.toggle("on",!!opt.pvOn)}
+function pvCsv(all){const rows=(all?PV:PV.slice(-200)).filter(r=>r.res&&!r.res.void),P=opt.pvP,ks=Object.keys(P.w);
+  const hd=["t_utc","ver","h_min","fonte","dir","score","p0","p1","ret_pct","ok","netto_pct"].concat(ks);
+  const L=["# REGISTRO PREVISIONI MAPPA — regole correnti: "+JSON.stringify(P)+" ; costo "+opt.pvCost+"% ; "+rows.length+" righe verificate"+(all?"":" (ultime 200)"),hd.join(",")];
+  for(const r of rows)L.push([new Date(r.t).toISOString(),r.ver,r.h,r.fe,r.dir,r.sc,r.p,r.res.p1,r.res.ret,r.res.ok?1:0,r.res.net===null?"":r.res.net].concat(ks.map(k=>r.f[k]||0)).join(","));return L.join("\n")}
+$("bPv").onclick=()=>{const h=$("pp");h.hidden=!h.hidden;pvSync();pvPanel()};
+$("pvA").onchange=e=>{opt.pvOn=e.target.checked;saveOpt();pvSync();dirty=true;draw()};
+$("pvH").onchange=e=>{opt.pvH=+e.target.value;PVslot=-1;saveOpt()};
+$("pvC").onchange=e=>{const x=parseFloat(e.target.value);if(x>=0){opt.pvCost=x;saveOpt()}pvSync()};
+$("pvE").onclick=async()=>{const t=$("pvT");t.hidden=false;t.readOnly=true;t.value=pvCsv(false);try{await navigator.clipboard.writeText(t.value);$("pvM").textContent="Copiato: incollalo nella chat"}catch(e){t.select();$("pvM").textContent="Seleziona e copia a mano"}};
+$("pvD").onclick=()=>{const b=new Blob([pvCsv(true)],{type:"text/csv"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="previsioni_mappa_"+new Date().toISOString().slice(0,10)+".csv";document.body.appendChild(a);a.click();a.remove()};
+$("pvR").onclick=()=>{const t=$("pvT");t.hidden=false;t.readOnly=false;t.value=JSON.stringify(opt.pvP,null,1);$("pvM").textContent="Regole correnti (modificabili: incolla qui nuove regole e premi Importa)"};
+$("pvI").onclick=()=>{const t=$("pvT");try{const P=JSON.parse(t.value);if(!P||typeof P.ver!=="string"||!(P.th>0)||typeof P.w!=="object")throw 0;for(const k in P.w)if(typeof P.w[k]!=="number")throw 0;
+    if(PV.some(r=>r.ver===P.ver)&&JSON.stringify(P)!==JSON.stringify(opt.pvP)){$("pvM").textContent="Quel nome di versione esiste già: usa un nome nuovo (es. v2-...)";return}
+    opt.pvP=P;saveOpt();$("pvM").textContent="Regole "+P.ver+" attive: valgono per le previsioni nuove";pvPanel()}catch(e){$("pvM").textContent='Formato non valido: serve {"ver":"nome","th":numero>0,"w":{feature:peso,...}}'}};
+$("pvZ").onclick=()=>{if($("pvZ").dataset.c!=="1"){$("pvZ").dataset.c="1";$("pvZ").textContent="Conferma azzera";setTimeout(()=>{$("pvZ").dataset.c="";$("pvZ").textContent="Azzera registro"},4000);return}
+  PV=[];pvSave();$("pvZ").dataset.c="";$("pvZ").textContent="Azzera registro";pvPanel();dirty=true;draw()};
 // ---- Copia per Claude
 function snapshot(){
   const f1=x=>x.toFixed(1),f2=x=>x.toFixed(2),j0=lb(TR,v.t0,t=>t[0]);let j1=j0;while(j1<TR.length&&TR[j1][0]<=v.t1)j1++;
@@ -514,12 +595,13 @@ function snapshot(){
     Ls.push("Liquidazioni reali nella finestra (Bybit/OKX/Binance, BTC perp): "+lw.length+" eventi; totale per tipo: "+Object.entries(A).map(([k,x])=>k+" "+x.toFixed(2)+" BTC").join(", ")+"; più grosse: "+big.map(q=>fmtT(q.t,true)+" "+q.v+" "+(q.lg?"long liquidato":"short liquidato")+" "+q.q.toFixed(2)+" BTC @ "+q.p.toFixed(1)).join(" ; "))}
     else if(live)Ls.push("Liquidazioni reali nella finestra: nessuna ricevuta (feed Bybit/OKX/Binance attivi solo da quando hai premuto Live).")}
   {const lv=SG?levels(S.length?S[S.length-1].t:0).filter(L_=>L_.p>=v.p0&&L_.p<=v.p1):[];if(lv.length)Ls.push("Livelli dove possono stare gli stop (inferenza, non dati): "+lv.map(L_=>L_.n+" "+L_.p.toFixed(0)).join(", "))}
+  {const pw=PV.filter(r=>r.t>=v.t0&&r.t<=v.t1);if(pw.length)Ls.push("Previsioni della mappa nella finestra (regole "+opt.pvP.ver+", ipotesi): "+pw.map(r=>fmtT(r.t,true)+" "+(r.dir>0?"SU":r.dir<0?"GIÙ":"neutra")+" (punteggio "+r.sc.toFixed(2)+")"+(r.res&&!r.res.void?" → "+(r.res.ok?"ok":"no")+" "+r.res.ret.toFixed(2)+"%":" → in attesa")).join(" ; "))}
   const ev=EV.filter(e=>e[0]>=v.t0&&e[0]<=v.t1);if(ev.length)Ls.push("Eventi segnalati nella finestra: "+ev.map(e=>fmtT(e[0],true)+" "+e[1]).join(" ; "));
   Ls.push("Nota: dati del solo libro/trade della sorgente indicata sopra (le registrazioni di confronto sono Kraken spot); nessun attore identificabile; condizioni di vantaggio temporaneo ≠ edge statistico (le definizioni congelate sono nei protocolli v34–v35).");
   return Ls.join("\n")}
 function cpBuild(){const n=$("cpN").value.trim();$("cpT").value=(n?"LA MIA LETTURA: "+n+"\n\n":"")+snapshot()+"\n\nRichiesta: verifica se la mia lettura è corretta; confrontala con le registrazioni (casi simili, esiti a 1/5/15 min al netto dei costi, campione e baseline) e dimmi quali condizioni vedi tu."}
 $("bC").onclick=()=>{cpBuild();$("cp").hidden=false;$("cpM").textContent=""};$("cpX").onclick=()=>{$("cp").hidden=true};$("cpN").addEventListener("input",cpBuild);
 $("cpC").onclick=async()=>{cpBuild();const t=$("cpT");try{await navigator.clipboard.writeText(t.value);$("cpM").textContent="Copiato"}catch(e){t.removeAttribute("readonly");t.select();try{document.execCommand("copy");$("cpM").textContent="Copiato"}catch(_){$("cpM").textContent="Selezionato: copia a mano"}t.setAttribute("readonly","")}};
-sync();lay();if(window.DATI3)load(window.DATI3);size();resumeLive();setInterval(persist,5000);addEventListener("pagehide",persist);document.addEventListener("visibilitychange",()=>{if(document.hidden)persist()});
+pvSync();sync();lay();if(window.DATI3)load(window.DATI3);size();resumeLive();setInterval(persist,5000);addEventListener("pagehide",persist);document.addEventListener("visibilitychange",()=>{if(document.hidden)persist()});
 if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script></body></html>
