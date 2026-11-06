@@ -17,7 +17,7 @@ body{display:flex;flex-direction:column}#c{touch-action:none;display:block;width
 #hl{position:fixed;left:8px;bottom:68px;z-index:7;width:min(460px,calc(100vw - 16px));max-height:calc(100vh - 130px);overflow:auto;background:var(--panel);border:1px solid var(--ln);border-radius:10px;padding:10px 12px;box-shadow:0 6px 24px #000a;font-size:12px}#hl[hidden]{display:none}
 #hl h4{margin:10px 0 4px;color:var(--acc);font-size:12px;letter-spacing:.04em;text-transform:uppercase}#hl h4:first-child{margin-top:0}#hl .r{display:flex;gap:8px;align-items:flex-start;margin:3px 0}#hl .k{flex:none;min-width:26px;height:20px;border-radius:10px;background:#0b0f14;border:1.5px solid var(--buy);color:var(--buy);text-align:center;font-weight:700;line-height:17px;padding:0 4px}#hl .k.s{border-color:var(--sell);color:var(--sell)}#hl .k.n{border-color:var(--ln);color:var(--fg)}#hl small{color:var(--mut)}
 #sp,#pp{position:fixed;top:96px;right:10px;z-index:8;background:var(--panel);border:1px solid var(--ln);border-radius:10px;padding:10px 12px;width:290px;box-shadow:0 6px 24px #000a;font-size:12px}#sp[hidden],#pp[hidden]{display:none}#sp label,#pp label{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:6px 0;color:var(--mut)}#sp input[type=number],#pp input[type=number],#pp select{width:70px;background:#12171c;color:var(--fg);border:1px solid var(--ln);border-radius:6px;padding:3px 5px}#sp .rw,#pp .rw{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-#toast{position:fixed;top:100px;left:50%;transform:translateX(-50%);z-index:9;display:flex;flex-direction:column;gap:6px;pointer-events:none;align-items:center}#toast div{background:#12171cee;border:1px solid var(--acc);border-radius:8px;padding:6px 12px;font-size:13px;box-shadow:0 4px 16px #000a}#toast .tec{border-color:var(--sell);color:#ffb3ae}
+#toast{position:fixed;top:100px;left:50%;transform:translateX(-50%);z-index:9;display:flex;flex-direction:column;gap:6px;pointer-events:none;align-items:center}#toast div{max-width:min(600px,92vw);background:#12171cee;border:1px solid var(--acc);border-radius:8px;padding:6px 12px;font-size:13px;box-shadow:0 4px 16px #000a}#toast .tec{border-color:var(--sell);color:#ffb3ae}
 #tip{position:fixed;pointer-events:none;background:#12171cee;border:1px solid var(--ln);border-radius:6px;padding:6px 8px;font-size:12px;display:none;white-space:pre;z-index:5}
 #cp{position:fixed;inset:0;background:#000a;z-index:9;display:flex;align-items:flex-end;justify-content:center}#cp[hidden]{display:none}
 .box{background:var(--panel);border:1px solid var(--ln);border-radius:12px 12px 0 0;padding:12px;width:min(720px,100%);max-height:92%;overflow:auto}
@@ -42,7 +42,7 @@ body{display:flex;flex-direction:column}#c{touch-action:none;display:block;width
 <label><span>Previsioni attive (solo in Live)</span><input type="checkbox" id="pvA"></label>
 <label><span>Orizzonte (minuti)</span><select id="pvH"><option value="1">1</option><option value="5">5</option><option value="15">15</option><option value="30">30</option></select></label>
 <label><span>Costo andata e ritorno (%)</span><input type="number" id="pvC" min="0" step="0.01"></label>
-<div id="pvS"></div>
+<div id="pvW" class="vd" hidden></div><div id="pvS"></div>
 <div class="rw"><button id="pvE">Copia registro per Claude</button><button id="pvD">Scarica CSV</button><button id="pvR">Mostra regole</button><button id="pvI">Importa regole</button><button id="pvZ">Azzera registro</button></div>
 <textarea id="pvT" rows="6" hidden></textarea><span id="pvM" style="color:var(--mut)"></span>
 <small>Una previsione ogni N minuti a orario fisso (non guarda i risultati prima di farla). Le regole iniziali sono ipotesi, non provate. Il registro resta nel browser. Ogni cambio di regole è una nuova versione e si valuta solo sulle previsioni nuove.</small></div>
@@ -440,7 +440,7 @@ function audio(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioCont
 addEventListener("pointerdown",audio);addEventListener("keydown",audio);
 const AL={liq:{seq:[[660,.12],[880,.2]],type:"sine",vol:.2},area:{seq:[[523,.1],[659,.1],[784,.18]],type:"triangle",vol:.22},fine:{seq:[[784,.12],[523,.22]],type:"triangle",vol:.22},sweep:{seq:[[220,.4]],type:"sawtooth",vol:.1},tec:{seq:[[880,.18],[440,.18],[880,.18],[440,.18]],type:"square",vol:.1}};
 function tone(k){const a=audio(),d=AL[k];if(!a)return;let t=a.currentTime;for(const [f,du] of d.seq){const o=a.createOscillator(),g=a.createGain();o.type=d.type;o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(d.vol,t+.015);g.gain.exponentialRampToValueAtTime(.0001,t+du);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+du+.03);t+=du*.9}}
-function toast(m,k){const b=$("toast"),e=document.createElement("div");if(k==="tec")e.className="tec";e.textContent=fmtT(Date.now(),false)+" · "+m;b.appendChild(e);while(b.children.length>3)b.removeChild(b.firstChild);setTimeout(()=>e.remove(),k==="tec"?12000:7000)}
+function toast(m,k){const b=$("toast"),e=document.createElement("div");if(k==="tec")e.className="tec";e.textContent=fmtT(Date.now(),false)+" · "+m;b.appendChild(e);while(b.children.length>3)b.removeChild(b.firstChild);setTimeout(()=>e.remove(),k==="tec"?12000:k==="pv"?20000:7000)}
 function alarm(kind,msg,key,cool,force){const now=Date.now();if(!live&&!force)return;if(key){if(now-(lastKey[key]||0)<(cool||300000))return;lastKey[key]=now}
   toast(msg,kind);if(!opt.snd)return;if(kind!=="tec"&&now-lastSnd<20000)return;lastSnd=now;tone(kind)}
 function lqAlarm(t,p,q,v,lg){if(!live||Date.now()-t>30000)return;const what=(lg?"long":"short")+" liquidato";
@@ -525,8 +525,17 @@ function pvFeat(t,s){const mid=s.mid,f={};
   for(const e of EVS){if(e.t<t-300000||e.t>t||!evOk(e)||f[e.kind]===undefined)continue;f[e.kind]=Math.max(-1,Math.min(1,f[e.kind]+e.dir*.5))}
   let sl=0,ll=0;for(const q of LQ){if(q.t<t-300000||q.t>t)continue;q.lg?ll+=q.q:sl+=q.q}f.liq=sl+ll>0?(sl-ll)/(sl+ll):0;
   for(const k in f)f[k]=+f[k].toFixed(3);return f}
+const PVN={flow:"flusso aggressivo 5 min",book:"libro entro 30 $",A:"assorbimento",I:"iceberg",J:"possibile iceberg",S:"sweep",X:"stop run",R:"muro ritirato",L:"layering",T:"tocco di livello",liq:"liquidazioni"};
+function pvWhy(r){const P=opt.pvP,up=[],dn=[];for(const k in P.w){const c=(P.w[k]||0)*(r.f[k]||0);if(!c)continue;(c>0?up:dn).push([k,c])}
+  const fm=a=>a.sort((x,y)=>Math.abs(y[1])-Math.abs(x[1])).map(([k,c])=>PVN[k]+" ("+(c>0?"+":"")+c.toFixed(2)+")").join(", ");
+  const dsc=k=>k==="flow"?(r.f.flow>0?"prevalgono acquisti aggressivi":"prevalgono vendite aggressive"):k==="book"?(r.f.book>0?"più liquidità bid che ask":"più liquidità ask che bid"):"";
+  let t="Punteggio "+(r.sc>=0?"+":"")+r.sc.toFixed(2)+" (soglia ±"+P.th+"). ";
+  t+=up.length?"Spingono SU: "+fm(up)+". ":"Nessun elemento spinge SU. ";t+=dn.length?"Spingono GIÙ: "+fm(dn)+". ":"Nessun elemento spinge GIÙ. ";
+  const fl=up.concat(dn).filter(x=>x[0]==="flow"||x[0]==="book").map(x=>dsc(x[0])).filter(Boolean);if(fl.length)t+="Dettaglio: "+fl.join("; ")+". ";
+  if(r.dir>0)t+="Scelgo SU perché il punteggio supera la soglia.";else if(r.dir<0)t+="Scelgo GIÙ perché il punteggio scende sotto la soglia negativa.";
+  else t+=(up.length&&dn.length?"NEUTRA: gli elementi si contrastano e il totale resta dentro la soglia.":"NEUTRA: i segnali sono troppo deboli, il totale resta dentro la soglia.");return t}
 function pvMake(now){const s=S[S.length-1],P=opt.pvP,f=pvFeat(now,s);let sc=0;for(const k in P.w)sc+=(P.w[k]||0)*(f[k]||0);
-  const dir=Math.abs(sc)>=P.th?Math.sign(sc):0;PV.push({t:now,p:s.mid,dir,sc:+sc.toFixed(3),f,ver:P.ver,h:opt.pvH,fe:$("sFe").value,res:null});pvSave();dirty=true}
+  const dir=Math.abs(sc)>=P.th?Math.sign(sc):0;PV.push({t:now,p:s.mid,dir,sc:+sc.toFixed(3),f,ver:P.ver,h:opt.pvH,fe:$("sFe").value,res:null});const lr=PV[PV.length-1];lr.why=pvWhy(lr);pvSave();dirty=true;toast("Previsione "+(lr.dir>0?"▲ SU":lr.dir<0?"▼ GIÙ":"◆ NEUTRA")+" a "+lr.h+" min: "+lr.why,"pv")}
 function pvTick(now){if(!live)return;
   // verifica delle previsioni scadute
   let ch=false;for(const r of PV){if(r.res)continue;const tg=r.t+r.h*60000;if(now<tg)continue;
@@ -539,7 +548,7 @@ function pvTick(now){if(!live)return;
   if(!opt.pvOn||S.length<120)return;
   const slot=Math.floor(now/(opt.pvH*60000));if(PVslot<0){PVslot=slot;return}  // la prima fetta (parziale) non genera previsioni
   if(slot!==PVslot){PVslot=slot;pvMake(now);if(!$("pp").hidden)pvPanel()}}
-function pvText(r){const dd=r.dir>0?"SU":r.dir<0?"GIÙ":"NEUTRA";let t="— PREVISIONE "+dd+" ("+r.h+" min, regole "+r.ver+") alle "+fmtT(r.t,true)+" @ "+pvF(r.p,1)+"\n  punteggio "+pvF(r.sc)+" | "+Object.entries(r.f).filter(([k,x])=>x!==0).map(([k,x])=>k+" "+x).join(", ");
+function pvText(r){const dd=r.dir>0?"SU":r.dir<0?"GIÙ":"NEUTRA";let t="— PREVISIONE "+dd+" ("+r.h+" min, regole "+r.ver+") alle "+fmtT(r.t,true)+" @ "+pvF(r.p,1)+"\n  PERCHÉ: "+(r.why||pvWhy(r));
   if(r.res&&!r.res.void)t+="\n  esito: "+(r.res.ok?"ESATTA":"SBAGLIATA")+", prezzo "+pvF(r.res.p1,1)+" ("+(r.res.ret>=0?"+":"")+pvF(r.res.ret)+"%)"+(r.res.net!==null?", netto dei costi "+(r.res.net>=0?"+":"")+pvF(r.res.net)+"%":"");
   else if(r.res&&r.res.void)t+="\n  non verificabile (dati mancanti)";else t+="\n  in attesa della verifica";return t}
 function wilson(k,n){if(!n)return[0,0];const z=1.96,p=k/n,d=1+z*z/n,c=p+z*z/(2*n),m=z*Math.sqrt(p*(1-p)/n+z*z/(4*n*n));return[(c-m)/d,(c+m)/d]}
@@ -553,7 +562,7 @@ function pvPanel(){const vers=[...new Set(PV.map(r=>r.ver))],cur=opt.pvP.ver;let
   else if(a.ci[0]>a.base&&a.net>0)vd="Possibile vantaggio con queste regole: esatte "+(100*a.hit).toFixed(0)+"% (limite basso "+(100*a.ci[0]).toFixed(0)+"%) sopra il caso "+(100*a.base).toFixed(0)+" % e netto positivo. Da confermare su previsioni NUOVE prima di fidarsi.";
   else vd="Nessun vantaggio dimostrato: esatte "+(100*a.hit).toFixed(0)+"% contro caso "+(100*a.base).toFixed(0)+"%, netto "+(a.net>=0?"+":"")+a.net.toFixed(3)+"% a trade dopo costi "+opt.pvCost.toFixed(2)+"%.";
   h+='<div class="vd">'+vd+'</div><small>Verificate: '+a.n+" · in attesa: "+PV.filter(r=>!r.res).length+" · neutre corrette (mosso meno del costo): "+(a.nn?(100*a.flat).toFixed(0)+"%":"—")+" · movimento lordo medio nella direzione prevista: "+(a.nd?(a.gross>=0?"+":"")+a.gross.toFixed(3)+"%":"—")+"</small>";
-  $("pvS").innerHTML=h}
+  $("pvS").innerHTML=h;const lp=PV[PV.length-1];$("pvW").hidden=!lp;if(lp)$("pvW").textContent="Ultima previsione ("+fmtT(lp.t,false)+"): "+(lp.dir>0?"SU":lp.dir<0?"GIÙ":"NEUTRA")+". "+(lp.why||pvWhy(lp))}
 function pvSync(){$("pvA").checked=!!opt.pvOn;$("pvH").value=String(opt.pvH);$("pvC").value=opt.pvCost;$("bPv").classList.toggle("on",!!opt.pvOn)}
 function pvCsv(all){const rows=(all?PV:PV.slice(-200)).filter(r=>r.res&&!r.res.void),P=opt.pvP,ks=Object.keys(P.w);
   const hd=["t_utc","ver","h_min","fonte","dir","score","p0","p1","ret_pct","ok","netto_pct"].concat(ks);
