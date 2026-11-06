@@ -26,7 +26,7 @@ body{display:flex;flex-direction:column}#c{touch-action:none;display:block;width
 .rw{display:flex;gap:10px;align-items:center;margin:10px 0 4px}.box small{color:var(--mut)}
 @media(max-width:640px){#top h1{display:none}}
 #pp{width:340px;max-height:calc(100vh - 110px);overflow:auto}#pp textarea{width:100%;box-sizing:border-box;background:#12171c;color:var(--fg);border:1px solid var(--ln);border-radius:6px;font:11px ui-monospace,Consolas,monospace;margin-top:6px}#pp table{width:100%;border-collapse:collapse;margin:6px 0;font-size:11px}#pp td,#pp th{padding:2px 3px;text-align:right;border-bottom:1px solid var(--ln)}#pp td:first-child,#pp th:first-child{text-align:left}#pp .vd{margin:6px 0;padding:6px 8px;border-radius:6px;background:#12171c;line-height:1.4}</style></head><body>
-<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v32</small></h1><span class="t" id="tit"></span>
+<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v33</small></h1><span class="t" id="tit"></span>
 <button id="bCa" class="on">Candele</button><select id="sTf"><option value="15000">15 s</option><option value="60000" selected>1 min</option><option value="300000">5 min</option><option value="900000">15 min</option><option value="1800000">30 min</option><option value="3600000">1 ora</option></select>
 <button id="bNe" class="on">Sfondo nero</button><button id="bCo" title="Intensità e contrasto della mappa di calore">Colori ▾</button><button id="bZn" class="on" title="Aree dense di liquidità (bande da 10 $ con molto volume nel libro, che durano almeno 30 s)">Aree</button><button id="bSn" class="on" title="Allarmi sonori: liquidazioni grosse, prezzo vicino ad aree dense, sweep enormi, feed fermo">Suoni ▾</button><button id="bLq" class="on" title="Liquidazioni reali (Bybit, OKX, Binance): rombo rosso = long liquidato, verde = short liquidato">Liq.</button><button id="bSt" class="on" title="Linee dei livelli dove probabilmente stanno gli stop (massimi/minimi recenti e numeri tondi): è un'inferenza">Stop?</button><button id="bSg" class="on" title="Segnali: assorbimento, iceberg, muro ritirato, layering, sweep, tocco di livello">Segnali</button><button id="bRm" title="Dimensione minima del muro ritirato (R) mostrato: clic = cambia (10/15/20/30/50 BTC)">R ≥ 20</button><button id="bBo" class="on">Bolle</button><button id="bB1" title="Bolle più piccole (le bolle si raggruppano per timeframe e passo prezzo)">Bolle −</button><button id="bB2" title="Bolle più grandi">Bolle +</button><button id="bVo" class="on">Volume</button>
 <button id="bPv" class="on" title="Previsioni direzionali (freccia verde su, rossa giù, grigia neutra) con verifica automatica dopo l'orizzonte scelto">Previsioni ▾</button><button id="bYm" title="Scala prezzo: Auto = si adatta ai dati visibili; Fisso = altezza fissa centrata sul prezzo; Libero = la sposti tu">Prezzo: Fisso</button><button id="bY1" title="Riduci altezza (più zoom sul prezzo)">Altezza −</button><button id="bY2" title="Aumenta altezza (meno zoom sul prezzo)">Altezza +</button>
@@ -221,10 +221,13 @@ function draw(){
     const stp=stepNow();
     const bins=new Map();for(const k of smp.c){const b=Math.floor(k[0]/stp)*stp;let o=bins.get(b);if(!o){o={q:0,a:0,b:0};bins.set(b,o)}o.q+=k[1];k[2]===1?o.a+=k[1]:o.b+=k[1]}
     let mxq=1e-9;for(const [p,o] of bins)if(p+stp>=v.p0&&p<=v.p1)mxq=Math.max(mxq,o.q);
-    cx.font="bold 13px ui-monospace,Consolas,monospace";
+    cx.font="bold 13px ui-monospace,Consolas,monospace";const labs=[];
     for(const [p,o] of bins){if(p+stp<v.p0||p>v.p1)continue;const y1=py(p+stp),y0=py(p),hh=Math.max(1,y0-y1-1),isAsk=o.a>=o.b;
       cx.fillStyle=isAsk?"rgba(240,140,50,.85)":"rgba(70,209,123,.8)";cx.fillRect(cx0+L.COB*.5,y1+.5,Math.max(1,o.q/mxq*(L.COB*.5-2)),hh);
-      if(hh>=12){cx.fillStyle="#e6edf5";cx.fillText(o.q>=10?o.q.toFixed(1):o.q.toFixed(2),cx0+3,y1+hh/2+4.5)}}
+      labs.push({y:y1+hh/2,q:o.q})}
+    // numeri: se le righe sono sottili, si scrivono prima i livelli più grossi, senza sovrapporli (a zoom largo compaiono tutti)
+    {labs.sort((a,b)=>b.q-a.q);const used=[];cx.font="bold 12px ui-monospace,Consolas,monospace";cx.lineWidth=3;cx.strokeStyle="#1f262e";cx.lineJoin="round";
+      for(const l of labs){if(used.some(u=>Math.abs(u-l.y)<12))continue;used.push(l.y);const tx_=l.q>=10?l.q.toFixed(1):l.q.toFixed(2);cx.strokeText(tx_,cx0+3,l.y+4.5);cx.fillStyle="#e6edf5";cx.fillText(tx_,cx0+3,l.y+4.5)}}
     // prezzo corrente: riga grigia e ultimo scambio
     {const Ym=py(smp.mid);cx.strokeStyle="#9aa5b1";cx.lineWidth=1;cx.beginPath();cx.moveTo(cx0,Ym);cx.lineTo(cx0+L.COB,Ym);cx.stroke();cx.moveTo(0,Ym);
       const lt=TR.length?TR[TR.length-1]:null;if(lt){cx.font="bold 11px system-ui";cx.textAlign="right";cx.fillStyle=lt[3]>0?"#56e084":"#f0625c";cx.fillText((lt[2]>=1?lt[2].toFixed(2):lt[2]>=.001?lt[2].toFixed(3):lt[2].toFixed(5))+" @ "+lt[1].toFixed(1),w-4,Ym-4);cx.textAlign="left"}}
