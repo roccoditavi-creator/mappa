@@ -21,9 +21,9 @@ body{display:flex;flex-direction:column}#c{touch-action:none;display:block;width
 .rw{display:flex;gap:10px;align-items:center;margin:10px 0 4px}.box small{color:var(--mut)}
 @media(max-width:640px){#top h1{display:none}}
 </style></head><body>
-<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v27</small></h1><span class="t" id="tit"></span>
+<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v28</small></h1><span class="t" id="tit"></span>
 <button id="bCa" class="on">Candele</button><select id="sTf"><option value="15000">15 s</option><option value="60000" selected>1 min</option><option value="300000">5 min</option><option value="900000">15 min</option><option value="1800000">30 min</option><option value="3600000">1 ora</option></select>
-<button id="bNe" class="on">Sfondo nero</button><button id="bCo" title="Intensità e contrasto della mappa di calore">Colori ▾</button><button id="bZn" class="on" title="Aree dense di liquidità (bande da 10 $ con molto volume nel libro, che durano almeno 30 s)">Aree</button><button id="bSg" class="on" title="Segnali: assorbimento, iceberg, muro ritirato, layering, sweep, tocco di livello">Segnali</button><button id="bRm" title="Dimensione minima del muro ritirato (R) mostrato: clic = cambia (10/15/20/30/50 BTC)">R ≥ 20</button><button id="bBo" class="on">Bolle</button><button id="bB1" title="Bolle più piccole (le bolle si raggruppano per timeframe e passo prezzo)">Bolle −</button><button id="bB2" title="Bolle più grandi">Bolle +</button><button id="bVo" class="on">Volume</button>
+<button id="bNe" class="on">Sfondo nero</button><button id="bCo" title="Intensità e contrasto della mappa di calore">Colori ▾</button><button id="bZn" class="on" title="Aree dense di liquidità (bande da 10 $ con molto volume nel libro, che durano almeno 30 s)">Aree</button><button id="bLq" class="on" title="Liquidazioni reali (Bybit, OKX, Binance): rombo rosso = long liquidato, verde = short liquidato">Liq.</button><button id="bSt" class="on" title="Linee dei livelli dove probabilmente stanno gli stop (massimi/minimi recenti e numeri tondi): è un'inferenza">Stop?</button><button id="bSg" class="on" title="Segnali: assorbimento, iceberg, muro ritirato, layering, sweep, tocco di livello">Segnali</button><button id="bRm" title="Dimensione minima del muro ritirato (R) mostrato: clic = cambia (10/15/20/30/50 BTC)">R ≥ 20</button><button id="bBo" class="on">Bolle</button><button id="bB1" title="Bolle più piccole (le bolle si raggruppano per timeframe e passo prezzo)">Bolle −</button><button id="bB2" title="Bolle più grandi">Bolle +</button><button id="bVo" class="on">Volume</button>
 <button id="bYm" title="Scala prezzo: Auto = si adatta ai dati visibili; Fisso = altezza fissa centrata sul prezzo; Libero = la sposti tu">Prezzo: Fisso</button><button id="bY1" title="Riduci altezza (più zoom sul prezzo)">Altezza −</button><button id="bY2" title="Aumenta altezza (meno zoom sul prezzo)">Altezza +</button>
 <button id="bG1" title="Granularità più fine: righe più sottili ([)">Passo −</button><button id="bGl" title="Passo del prezzo; clic = automatico">Passo: auto</button><button id="bG2" title="Granularità più larga: righe più spesse (])">Passo +</button>
 <button id="bR">Vista intera</button><button id="bU" title="Ricentra il grafico su prezzo e ultime transazioni (tasto C)">Ricentra</button><select id="sFe" title="Sorgente dati del Live"><option value="kr">Kraken spot</option><option value="krf">Kraken futures PF_XBTUSD</option><option value="okp">OKX perp BTC-USDT</option><option value="okx">OKX X-Perp BTC-USD</option><option value="oks">OKX spot BTC-USDT</option></select><button id="bL">Live</button><button id="bTv" title="Apre lo stesso strumento su TradingView (nuova scheda)">TradingView ↗</button><button id="bC">Copia per Claude</button></div>
@@ -49,7 +49,7 @@ let L={AX:50,COB:46,SVP:92,CVD:120,TAX:22,VOL:46,FUT:.1};
 let ym="fisso",fixH=60,gran=0;const GR=[1,2,3,4,5,10,20,25,50,100];
 function stepNow(){if(gran)return gran;const px=pmain()/(v.p1-v.p0);return GR.find(a=>a*px>=16)||100}
 const agg=(cells,stp)=>{if(stp<=1)return cells;const m=new Map();for(const k of cells){const b=Math.floor(k[0]/stp)*stp;let o=m.get(b);if(!o){o=[b,0,k[2],0,0];m.set(b,o)}o[1]+=k[1];k[2]===1?o[4]+=k[1]:o[3]+=k[1]}for(const o of m.values())o[2]=o[4]>o[3]?1:(o[3]>0?0:o[2]);return [...m.values()]};
-const opt={candele:true,bolle:true,volume:true,tf:60000,nero:true,pres3:.9,lum:1,con:1,sens:1,bub:1,segn:true,rmin:20,zone:true};
+const opt={candele:true,bolle:true,volume:true,tf:60000,nero:true,pres3:.9,lum:1,con:1,sens:1,bub:1,segn:true,rmin:20,zone:true,liq:true,stp:true};
 try{const o=JSON.parse(localStorage.getItem("mappa_opt")||"{}");Object.assign(opt,o)}catch(e){}
 function saveOpt(){try{localStorage.setItem("mappa_opt",JSON.stringify(opt))}catch(e){}}
 // ---- palette calore: fondo ardesia -> blu -> arancio -> rosso -> giallo -> bianco
@@ -146,6 +146,15 @@ function renderBase(){
       x.beginPath();if(e.dir>0){x.moveTo(X,Y-r-7);x.lineTo(X-4,Y-r-1);x.lineTo(X+4,Y-r-1)}else{x.moveTo(X,Y+r+7);x.lineTo(X-4,Y+r+1);x.lineTo(X+4,Y+r+1)}x.closePath();x.fill();
       evHit.push({x:X,y:Y,r:r+4,e})}
     x.textAlign="left"}
+  // livelli dove probabilmente stanno gli stop (massimi/minimi recenti, numeri tondi): linee tratteggiate
+  if(opt.stp&&SG&&S.length){const tl=S[S.length-1].t,mid=S[S.length-1].mid;x.font="10px system-ui";x.textAlign="right";x.setLineDash([2,5]);x.lineWidth=1;
+    for(const L_ of levels(tl)){if(L_.p<v.p0||L_.p>v.p1)continue;const Y=py(L_.p),up=L_.p>mid;x.strokeStyle=up?"rgba(255,170,60,.55)":"rgba(90,190,255,.55)";x.beginPath();x.moveTo(0,Y);x.lineTo(w,Y);x.stroke();const tt="stop "+(up?"sopra":"sotto")+"? "+L_.n+" "+L_.p.toFixed(0),tw=x.measureText(tt).width+8;x.fillStyle="rgba(8,12,16,.8)";x.fillRect(w-tw-2,Y-14,tw,13);x.fillStyle=up?"rgb(255,190,90)":"rgb(130,210,255)";x.fillText(tt,w-6,Y-4)}
+    x.setLineDash([]);x.textAlign="left"}
+  // liquidazioni reali
+  if(opt.liq&&LQ.length){x.font="bold 10px system-ui";x.textAlign="center";
+    for(const q of LQ){const X=tx(q.t),Y=py(q.p);if(X<-14||X>w+14||Y<-14||Y>h+14)continue;const r=Math.min(18,5+3.4*Math.log1p(q.q/.05)),col=q.lg?"#ff3d5a":"#2ef2a0";
+      x.fillStyle=col+"cc";x.strokeStyle="#fff";x.lineWidth=1.5;x.beginPath();x.moveTo(X,Y-r);x.lineTo(X+r,Y);x.lineTo(X,Y+r);x.lineTo(X-r,Y);x.closePath();x.fill();x.stroke();
+      if(q.q>=.5){x.fillStyle="#fff";x.fillText(q.q.toFixed(q.q>=10?0:1),X,Y+3.5)}evHit.push({x:X,y:Y,r:r+3,lq:q})}x.textAlign="left"}
   x.restore();
   // asse prezzi + griglia
   x.fillStyle="#222a33";x.fillRect(w,0,L.AX,h);x.fillStyle="#c5d1de";x.font="13px system-ui";
@@ -223,7 +232,8 @@ function showTip(x,y,cxp,cyp){
   if(x>mw()||y>pmain()){cross=null;tip.style.display="none";draw();return}
   cross={x,y};draw();const t=xt(x),p=yp(y);let txt=fmtT(t,true)+" UTC\nprezzo "+p.toFixed(1);
   const si=Math.max(0,lb(S,t,s=>s.t)-1);if(S[si]){const bn=Math.floor(p),c=S[si].c.find(k=>k[0]===bn);txt+="\nlibro in questo $: "+(c?c[1].toFixed(2)+" BTC ("+(c[2]?"vendita":"acquisto")+")":"—")}
-  for(const o of evHit){if(Math.hypot(o.x-x,o.y-y)<=o.r+2){const e=o.e;txt+="\n— SEGNALE "+e.kind+": "+KIND[e.kind]+"\n  attesa: "+(e.dir>0?"SU":"GIÙ")+" | dimensione "+e.size.toFixed(2)+" BTC"+(e.conMuro!==undefined?" | con muro: "+(e.conMuro?"sì":"no"):"")+(e.liv?" | livello: "+e.liv:"")+"\n  punteggio parziale "+e.score+"/6 (confluenza "+e.parts.confluenza+", livello "+e.parts.livello+", libro "+e.parts.libro+")"+(e.cand?" — CANDIDATO":"")+"\n  (approssimato sulla mappa; il registro ufficiale è sul VPS)";break}}
+  for(const o of evHit){if(o.lq&&Math.hypot(o.x-x,o.y-y)<=o.r+2){const q=o.lq;txt+="\n— LIQUIDAZIONE "+q.v+": "+(q.lg?"LONG liquidato (vendita forzata)":"SHORT liquidato (acquisto forzato)")+"\n  "+q.q.toFixed(3)+" BTC @ "+q.p.toFixed(1)+" ≈ "+Math.round(q.q*q.p).toLocaleString("it-IT")+" $ alle "+fmtT(q.t,true);break}
+    if(o.e&&Math.hypot(o.x-x,o.y-y)<=o.r+2){const e=o.e;txt+="\n— SEGNALE "+e.kind+": "+KIND[e.kind]+"\n  attesa: "+(e.dir>0?"SU":"GIÙ")+" | "+(e.kind==="X"?"volume oltre il livello ":"dimensione ")+e.size.toFixed(2)+" BTC"+(e.conMuro!==undefined?" | con muro: "+(e.conMuro?"sì":"no"):"")+(e.liv?" | livello: "+e.liv:"")+"\n  punteggio parziale "+e.score+"/6 (confluenza "+e.parts.confluenza+", livello "+e.parts.livello+", libro "+e.parts.libro+")"+(e.cand?" — CANDIDATO":"")+"\n  (approssimato sulla mappa; il registro ufficiale è sul VPS)";break}}
   for(const o of hit){if(Math.hypot(o.x-x,o.y-y)<=Math.max(o.r,12)){txt+="\n— bolla: "+o.c.q.toFixed(3)+" BTC, "+(o.c.s>0?"acquisto":"vendita")+" aggressiva, "+o.c.n+" trade";break}}
   tip.textContent=txt;tip.style.display="block";tip.style.left=Math.max(4,Math.min(cxp+14,innerWidth-250))+"px";tip.style.top=Math.max(48,Math.min(cyp+14,innerHeight-110))+"px"}
 let ax=null,pd_=null;const presX=()=>S.length?tx(S[S.length-1].t):-99;
@@ -249,13 +259,14 @@ cv.addEventListener("pointerup",up);cv.addEventListener("pointercancel",up);
 cv.addEventListener("dblclick",()=>{fit();draw()});
 cv.addEventListener("pointerleave",e=>{if(e.pointerType==="mouse"){cross=null;tip.style.display="none";draw()}});
 // ---- pulsanti
-function sync(){rmSet();$("bCa").classList.toggle("on",opt.candele);$("bBo").classList.toggle("on",opt.bolle);$("bSg").classList.toggle("on",opt.segn);$("bZn").classList.toggle("on",opt.zone);$("bNe").classList.toggle("on",opt.nero);$("bVo").classList.toggle("on",opt.volume);$("sTf").value=String(opt.tf)}
+function sync(){rmSet();$("bCa").classList.toggle("on",opt.candele);$("bBo").classList.toggle("on",opt.bolle);$("bSg").classList.toggle("on",opt.segn);$("bZn").classList.toggle("on",opt.zone);$("bLq").classList.toggle("on",opt.liq);$("bSt").classList.toggle("on",opt.stp);$("bNe").classList.toggle("on",opt.nero);$("bVo").classList.toggle("on",opt.volume);$("sTf").value=String(opt.tf)}
 $("bCa").onclick=()=>{opt.candele=!opt.candele;saveOpt();sync();dirty=true;draw()};
 $("bNe").onclick=()=>{opt.nero=!opt.nero;buildPal();saveOpt();sync();dirty=true;draw()};
 function bubSet(f){opt.bub=Math.min(4,Math.max(.3,+(opt.bub*f).toFixed(3)));opt.bolle=true;saveOpt();sync();dirty=true;draw()}
 $("bB1").onclick=()=>bubSet(1/1.25);$("bB2").onclick=()=>bubSet(1.25);
 function rmSet(){$("bRm").textContent="R ≥ "+opt.rmin}
 $("bRm").onclick=()=>{const L2=[10,15,20,30,50],i=L2.indexOf(opt.rmin);opt.rmin=L2[(i+1)%L2.length];saveOpt();rmSet();dirty=true;draw()};
+$("bLq").onclick=()=>{opt.liq=!opt.liq;saveOpt();sync();dirty=true;draw()};$("bSt").onclick=()=>{opt.stp=!opt.stp;saveOpt();sync();dirty=true;draw()};
 $("bZn").onclick=()=>{opt.zone=!opt.zone;saveOpt();sync();dirty=true;draw()};
 $("bSg").onclick=()=>{opt.segn=!opt.segn;saveOpt();sync();dirty=true;draw()};
 $("bBo").onclick=()=>{opt.bolle=!opt.bolle;saveOpt();sync();dirty=true;draw()};
@@ -276,8 +287,8 @@ addEventListener("keydown",e=>{if(e.target.tagName==="TEXTAREA"||e.target.tagNam
 window.addEventListener("resize",size);
 function load(d){S=d.samples.map(s=>{const c=[];if(s[2].length&&typeof s[2][0]==="number"){for(let i=0;i<s[2].length;i+=3)c.push([s[2][i],s[2][i+1],s[2][i+2]])}else for(const k of s[2])c.push(k);return{t:s[0],mid:s[1],c}});TR=d.trades;EV=d.eventi||[];title=d.titolo;$("tit").textContent=title;prep();sgAll();fit()}
 // ---- segnali: definizioni v34/v35 applicate ai campioni della mappa (livelli aggregati a 1 $, quindi APPROSSIMATE)
-let EVS=[],SG=null,evHit=[],ZN=[];const evOk=e=>!(e.kind==='R'&&e.size<opt.rmin);
-const KIND={A:"Assorbimento (H1)",I:"Iceberg forte (H2)",T:"Tocco di livello con muro (H3)",R:"Muro ritirato vicino (H4)",L:"Layering ristretto (H5)",S:"Sweep (H6)"};
+let EVS=[],SG=null,evHit=[],ZN=[],LQ=[],wsl=[];const evOk=e=>!(e.kind==='R'&&e.size<opt.rmin);
+const KIND={A:"Assorbimento (H1)",I:"Iceberg forte (H2)",T:"Tocco di livello con muro (H3)",R:"Muro ritirato vicino (H4)",L:"Layering ristretto (H5)",S:"Sweep (H6)",J:"Possibile iceberg (eseguito ≥2× mostrato, ≥2 ricariche)",X:"Stop run provvisorio (rottura di un max/min e rientro entro 60 s)"};
 function sgReset(){SG={lastT:0,walls:new Map(),lay:{bid:null,ask:null},ice:new Map(),lastAbs:-1e12,lastSw:{"1":-1e12,"-1":-1e12},touch:new Map(),grp:null,swC:{t:0,hi:[]}};EVS=[];ZN=[];SG.zn=new Map()}
 // ---- aree dense di liquidità: bande da 10 $ con somma >= max(30 BTC, 5 x mediana), persistenti >= 30 s
 const ZB=10,ZPERS=30000;
@@ -334,11 +345,18 @@ function sgStep(s){
   // --- iceberg forte (H2), approssimato su celle da 1 $
   for(const x of trs){const side=x[3]>0?"ask":"bid",key=side+"|"+Math.floor(x[1]);let st=SG.ice.get(key);if(!st){const c=(side==="ask"?al:bl).find(k=>k[0]===Math.floor(x[1]));const v=c?c[1]:0;st=SG.ice.set(key,{t0:x[0],t1:x[0],exec:0,max:v,ref:0,last:v,p:Math.floor(x[1]),side}).get(key)}st.exec+=x[2];st.t1=x[0]}
   for(const [key,st] of SG.ice){const c=(st.side==="ask"?al:bl).find(k=>k[0]===st.p),q=c?c[1]:0;if(q>st.max)st.max=q;if(q>st.last+1e-9&&st.exec>0)st.ref++;st.last=q;
-    if(t-st.t1>60000){if(st.exec>=2&&st.exec>=3*st.max&&st.ref>=3)EVS.push({t:st.t1,p:st.p,kind:"I",dir:st.side==="bid"?1:-1,size:st.exec,imb,dl:levDist(st.p,st.t1),rif:st.ref});SG.ice.delete(key)}}
+    if(st.exec>=1&&st.exec>=2*st.max&&st.ref>=2){if(!st.j){st.j={t:st.t1,p:st.p,kind:"J",dir:st.side==="bid"?1:-1,size:st.exec,imb,dl:levDist(st.p,st.t1),rif:st.ref};EVS.push(st.j)}else{st.j.size=st.exec;st.j.rif=st.ref}}
+    if(t-st.t1>60000){if(st.exec>=2&&st.exec>=3*st.max&&st.ref>=3){if(st.j){st.j.kind="I";st.j.size=st.exec;st.j.t=st.t1}else EVS.push({t:st.t1,p:st.p,kind:"I",dir:st.side==="bid"?1:-1,size:st.exec,imb,dl:levDist(st.p,st.t1),rif:st.ref})}else if(st.j&&!(st.exec>=1&&st.exec>=2*st.max&&st.ref>=2)){}SG.ice.delete(key)}}
   // --- tocco di livello con muro (H3)
   {const lv=levels(t),m60=midAt(t-60000),tp=new Map();for(const L_ of lv){const key=L_.n+"|"+Math.round(L_.p);const lastT=SG.touch.get(key)||-1e12;
     if(Math.abs(mid-L_.p)<=5&&Math.abs(m60-L_.p)>=20&&t-lastT>=300000){let wq=0;for(const k of big.bid.concat(big.ask))if(Math.abs(k[0]-L_.p)<=3)wq=Math.max(wq,k[1]);
       if(wq>=10){SG.touch.set(key,t);const pk=Math.round(L_.p),o=tp.get(pk);if(o)o.liv+=", "+L_.n;else tp.set(pk,{p:L_.p,d:m60<L_.p?-1:1,wq,liv:L_.n})}}}for(const o of tp.values())push("T",o.p,o.d,o.wq,{liv:o.liv})}
+  // --- stop run provvisorio (X): rottura di max/min 15/60 min e rientro entro 60 s
+  {SG.brk=SG.brk||new Map();SG.xcd=SG.xcd||new Map();for(const L_ of SG.swC.hi){const up=L_.n.startsWith("max"),key=L_.n,b=SG.brk.get(key);
+    if(!b){if((up&&mid>L_.p+2)||(!up&&mid<L_.p-2))SG.brk.set(key,{t:t,lv:L_.p,up,ext:mid})}
+    else{b.ext=up?Math.max(b.ext,mid):Math.min(b.ext,mid);const back=up?mid<b.lv-.5:mid>b.lv+.5;
+      if(back){SG.brk.delete(key);if(t-b.t<=60000&&t-(SG.xcd.get(key)||-1e12)>=300000){let q=0;for(let j=lb(TR,b.t,x=>x[0]);j<TR.length&&TR[j][0]<=t;j++){if(up?TR[j][1]>b.lv:TR[j][1]<b.lv)q+=TR[j][2]}SG.xcd.set(key,t);push("X",b.lv,up?-1:1,q,{liv:key+" (oltre di "+Math.abs(b.ext-b.lv).toFixed(1)+" $)"})}}
+      else if(t-b.t>60000)SG.brk.delete(key)}}}
 }
 function levels(t){const out=[],m=midAt(t);const r=Math.floor(m/500)*500;out.push({n:"tondo",p:r},{n:"tondo",p:r+500});
   if(SG.swC.t<t-10000){SG.swC.t=t;const h=[];for(const mn of [15,60]){let hi=-1e18,lo=1e18;for(let i=Math.max(0,lb(S,t-mn*60000,x=>x.t));i<S.length&&S[i].t<=t-60000;i++){hi=Math.max(hi,S[i].mid);lo=Math.min(lo,S[i].mid)}if(hi>0){h.push({n:"max "+mn+"m",p:hi},{n:"min "+mn+"m",p:lo})}}SG.swC.hi=h}
@@ -351,24 +369,34 @@ function sgAll(){sgReset();for(const s of S)sgStep(s)}
 let ws=null,bids=new Map(),asks=new Map(),timer=null;
 let pingT=null;const FE={krf:"Kraken Futures PF_XBTUSD perp (libro completo)",kr:"Kraken BTC/USD spot (libro 100 livelli)",okp:"OKX BTC-USDT-SWAP perp (libro 400 livelli, contratti da 0.01 BTC)",okx:"OKX X-Perp BTC-USD_UM_XPERP-310404 (contratti da 0.0001 BTC)",oks:"OKX BTC-USDT spot (libro 400 livelli)"};
 function addTrade(t){TR.push(t);CV.push((CV.length?CV[CV.length-1]:0)+t[3]*t[2]);const b=Math.floor(t[1]);let o=svp.get(b);if(!o){o={b:0,s:0};svp.set(b,o)}t[3]>0?o.b+=t[2]:o.s+=t[2]}
-function stopWs(){if(ws){ws.onmessage=null;ws.onclose=null;try{ws.close()}catch(e){}ws=null}clearInterval(timer);clearInterval(pingT)}
+// ---- liquidazioni reali (feed pubblici Bybit, OKX, Binance): long liquidato = vendita forzata
+function lqAdd(t,p,q,v,lg){if(!(q>0)||!(p>0))return;LQ.push({t,p,q,v,lg});if(LQ.length>3000)LQ.shift();dirty=true}
+function lqStop(){for(const w of wsl){try{w.onmessage=null;w.onclose=null;w.close()}catch(e){}}wsl=[]}
+function lqStart(){lqStop();
+  try{const b=new WebSocket("wss://stream.bybit.com/v5/public/linear");wsl.push(b);b.onopen=()=>{b.send(JSON.stringify({op:"subscribe",args:["allLiquidation.BTCUSDT"]}));b.__p=setInterval(()=>{try{b.send(JSON.stringify({op:"ping"}))}catch(e){}},20000)};
+    b.onclose=()=>clearInterval(b.__p);b.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(x){return}if(m.topic&&m.topic.startsWith("allLiquidation")&&m.data)for(const x of m.data)lqAdd(+x.T,+x.p,+x.v,"Bybit",x.S==="Buy")}}catch(e){}
+  try{const o=new WebSocket("wss://ws.okx.com/ws/v5/public");wsl.push(o);o.onopen=()=>{o.send(JSON.stringify({op:"subscribe",args:[{channel:"liquidation-orders",instType:"SWAP"}]}));o.__p=setInterval(()=>{try{o.send("ping")}catch(e){}},20000)};
+    o.onclose=()=>clearInterval(o.__p);o.onmessage=e=>{if(e.data==="pong")return;let m;try{m=JSON.parse(e.data)}catch(x){return}if(!m.data)return;for(const d of m.data){if(!/^BTC-/.test(d.instId||""))continue;const ct=/-USDT-SWAP$/.test(d.instId)?0.01:/-USD-SWAP$/.test(d.instId)?0:0.01;
+      for(const y of d.details||[]){const px=+y.bkPx,sz=+y.sz;let q=ct?sz*ct:(px?sz*100/px:0);lqAdd(+y.ts,px,q,"OKX",y.posSide==="long"||(y.posSide==="net"&&y.side==="sell"))}}}}catch(e){}
+  try{const n=new WebSocket("wss://fstream.binance.com/ws/btcusdt@forceOrder");wsl.push(n);n.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(x){return}const o=m.o;if(o&&o.s==="BTCUSDT")lqAdd(+o.T,+(o.ap>0?o.ap:o.p),+o.z||+o.q,"Binance",o.S==="SELL")}}catch(e){}}
+function stopWs(){lqStop();if(ws){ws.onmessage=null;ws.onclose=null;try{ws.close()}catch(e){}ws=null}clearInterval(timer);clearInterval(pingT)}
 // ---- sessione Live salvata nel browser (IndexedDB): con F5 il grafico riprende da dove era
 let savedT=0;
 const idbOpen=()=>new Promise((ok,ko)=>{try{const r=indexedDB.open("mappa_sess",1);r.onupgradeneeded=()=>r.result.createObjectStore("k");r.onsuccess=()=>ok(r.result);r.onerror=()=>ko(r.error)}catch(e){ko(e)}});
 const idbDo=(db,mode,fn)=>new Promise((ok,ko)=>{const t=db.transaction("k",mode),st=t.objectStore("k");const out=fn(st);t.oncomplete=()=>ok(out&&out.result!==undefined?out.result:out);t.onerror=()=>ko(t.error)});
 async function idbClear(){try{const db=await idbOpen();await idbDo(db,"readwrite",st=>st.clear());db.close()}catch(e){}}
 async function persist(){if(!live||!S.length)return;try{const i0=lb(S,savedT+1,s=>s.t);if(i0>=S.length&&savedT)return;const ns=S.slice(i0),j0=lb(TR,savedT+1,t=>t[0]),nt=TR.slice(j0),last=S[S.length-1].t,first=ns.length?ns[0].t:last;
-    const db=await idbOpen();await idbDo(db,"readwrite",st=>{st.put({s:ns,tr:nt,e:last},"c"+String(first).padStart(15,"0"));st.put({fe:$("sFe").value,live:true,last},"meta");
+    const db=await idbOpen();await idbDo(db,"readwrite",st=>{st.put({s:ns,tr:nt,lq:LQ.filter(x=>x.t>savedT),e:last},"c"+String(first).padStart(15,"0"));st.put({fe:$("sFe").value,live:true,last},"meta");
       const cur=st.openCursor();cur.onsuccess=()=>{const c=cur.result;if(c){if(String(c.key)[0]==="c"&&c.value.e<S[0].t)c.delete();c.continue()}}});db.close();savedT=last}catch(e){}}
 async function setMetaOff(){try{const db=await idbOpen();await idbDo(db,"readwrite",st=>{st.put({live:false},"meta")});db.close()}catch(e){}}
 async function resumeLive(){try{const db=await idbOpen();const all=await idbDo(db,"readonly",st=>st.getAll()),keys=await idbDo(db,"readonly",st=>st.getAllKeys());db.close();
     const mi=keys.indexOf("meta"),meta=mi>=0?all[mi]:null;if(!meta||!meta.live||Date.now()-meta.last>2*3600e3)return false;
     const ch=[];keys.forEach((k,i)=>{if(String(k)[0]==="c")ch.push([k,all[i]])});ch.sort((a,b)=>a[0]<b[0]?-1:1);if(!ch.length)return false;
-    const S2=[],T2=[];for(const [,c] of ch){for(const x of c.s)S2.push(x);for(const x of c.tr)T2.push(x)}if(S2.length<2)return false;
+    const S2=[],T2=[];LQ=[];for(const [,c] of ch){for(const x of c.s)S2.push(x);for(const x of c.tr)T2.push(x);for(const x of c.lq||[])LQ.push(x)}if(S2.length<2)return false;
     $("sFe").value=meta.fe;S=S2;TR=T2;EV=[];const lastS=S[S.length-1];S.push({t:lastS.t+1,mid:lastS.mid,c:[],gap:true});savedT=lastS.t;
     prep();sgAll();$("bL").classList.add("on");$("bL").textContent="Replay";liveStart(true);return true}catch(e){return false}}
-function liveStart(keep){stopWs();
-  if(!keep){S=[];TR=[];CV=[];svp=new Map();sgReset();savedT=0;idbClear()}EV=[];bids.clear();asks.clear();live=true;const fe=$("sFe").value;title="LIVE "+FE[fe];$("tit").textContent=title;clearInterval(pingT);
+function liveStart(keep){stopWs();lqStart();
+  if(!keep){S=[];TR=[];CV=[];svp=new Map();sgReset();savedT=0;LQ=[];idbClear()}EV=[];bids.clear();asks.clear();live=true;const fe=$("sFe").value;title="LIVE "+FE[fe];$("tit").textContent=title;clearInterval(pingT);
   if(fe==="kr"){ws=new WebSocket("wss://ws.kraken.com/v2");
   ws.onopen=()=>{ws.send(JSON.stringify({method:"subscribe",params:{channel:"book",symbol:["BTC/USD"],depth:100}}));ws.send(JSON.stringify({method:"subscribe",params:{channel:"trade",symbol:["BTC/USD"]}}))};
   ws.onmessage=e=>{const m=JSON.parse(e.data);
@@ -422,6 +450,10 @@ function snapshot(){
   const cs=candles();if(cs.length){const c0=cs[0],c1=cs[cs.length-1];Ls.push("Candele "+(opt.tf/1000)+" s nella finestra: "+cs.length+"; prima open "+f1(c0.o)+", ultima close "+f1(c1.c)+"; massimo "+f1(Math.max(...cs.map(c=>c.h)))+", minimo "+f1(Math.min(...cs.map(c=>c.l))))}
   {const za=znAll().filter(z=>z.t0<=v.t1&&(z.t1===null||z.t1>=v.t0));if(za.length)Ls.push("Aree dense di liquidità (bande da 10 $, somma ≥ max(30 BTC, 5×mediana), durata ≥30 s): "+za.map(z=>(z.side==="ask"?"ask":"bid")+" "+z.b*ZB+"–"+(z.b*ZB+ZB)+" "+(z.t1===null?z.q:z.max).toFixed(0)+" BTC da "+fmtT(z.t0,false)+(z.t1===null?" (ancora attiva)":" a "+fmtT(z.t1,false)+" "+z.esito)).join(" ; "))}
   if(EVS.length){sgScore();const se=EVS.filter(e=>evOk(e)&&e.t>=v.t0&&e.t<=v.t1);if(se.length)Ls.push("Segnali automatici nella finestra (approssimati, definizioni v34/v35): "+se.map(e=>fmtT(e.t,true)+" "+KIND[e.kind]+" prezzo "+f1(e.p)+" attesa "+(e.dir>0?"SU":"GIÙ")+" dim "+f2(e.size)+" BTC punteggio "+e.score+"/6"+(e.cand?" CANDIDATO":"")).join(" ; "))}
+  {const lw=LQ.filter(q=>q.t>=v.t0&&q.t<=v.t1);if(lw.length){const A={};for(const q of lw){const k=q.v+(q.lg?" long":" short");A[k]=(A[k]||0)+q.q}const big=lw.slice().sort((a,b)=>b.q-a.q).slice(0,6);
+    Ls.push("Liquidazioni reali nella finestra (Bybit/OKX/Binance, BTC perp): "+lw.length+" eventi; totale per tipo: "+Object.entries(A).map(([k,x])=>k+" "+x.toFixed(2)+" BTC").join(", ")+"; più grosse: "+big.map(q=>fmtT(q.t,true)+" "+q.v+" "+(q.lg?"long liquidato":"short liquidato")+" "+q.q.toFixed(2)+" BTC @ "+q.p.toFixed(1)).join(" ; "))}
+    else if(live)Ls.push("Liquidazioni reali nella finestra: nessuna ricevuta (feed Bybit/OKX/Binance attivi solo da quando hai premuto Live).")}
+  {const lv=SG?levels(S.length?S[S.length-1].t:0).filter(L_=>L_.p>=v.p0&&L_.p<=v.p1):[];if(lv.length)Ls.push("Livelli dove possono stare gli stop (inferenza, non dati): "+lv.map(L_=>L_.n+" "+L_.p.toFixed(0)).join(", "))}
   const ev=EV.filter(e=>e[0]>=v.t0&&e[0]<=v.t1);if(ev.length)Ls.push("Eventi segnalati nella finestra: "+ev.map(e=>fmtT(e[0],true)+" "+e[1]).join(" ; "));
   Ls.push("Nota: dati del solo libro/trade della sorgente indicata sopra (le registrazioni di confronto sono Kraken spot); nessun attore identificabile; condizioni di vantaggio temporaneo ≠ edge statistico (le definizioni congelate sono nei protocolli v34–v35).");
   return Ls.join("\n")}
