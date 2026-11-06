@@ -16,6 +16,8 @@ body{display:flex;flex-direction:column}#c{touch-action:none;display:block;width
 #hq{position:fixed;left:8px;bottom:34px;z-index:7;width:28px;height:28px;border-radius:50%;padding:0;font-weight:700;font-size:15px;line-height:26px;text-align:center;background:#27506e;border:1px solid var(--acc)}
 #hl{position:fixed;left:8px;bottom:68px;z-index:7;width:min(460px,calc(100vw - 16px));max-height:calc(100vh - 130px);overflow:auto;background:var(--panel);border:1px solid var(--ln);border-radius:10px;padding:10px 12px;box-shadow:0 6px 24px #000a;font-size:12px}#hl[hidden]{display:none}
 #hl h4{margin:10px 0 4px;color:var(--acc);font-size:12px;letter-spacing:.04em;text-transform:uppercase}#hl h4:first-child{margin-top:0}#hl .r{display:flex;gap:8px;align-items:flex-start;margin:3px 0}#hl .k{flex:none;min-width:26px;height:20px;border-radius:10px;background:#0b0f14;border:1.5px solid var(--buy);color:var(--buy);text-align:center;font-weight:700;line-height:17px;padding:0 4px}#hl .k.s{border-color:var(--sell);color:var(--sell)}#hl .k.n{border-color:var(--ln);color:var(--fg)}#hl small{color:var(--mut)}
+#sp{position:fixed;top:96px;right:10px;z-index:8;background:var(--panel);border:1px solid var(--ln);border-radius:10px;padding:10px 12px;width:290px;box-shadow:0 6px 24px #000a;font-size:12px}#sp[hidden]{display:none}#sp label{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:6px 0;color:var(--mut)}#sp input[type=number]{width:70px;background:#12171c;color:var(--fg);border:1px solid var(--ln);border-radius:6px;padding:3px 5px}#sp .rw{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+#toast{position:fixed;top:100px;left:50%;transform:translateX(-50%);z-index:9;display:flex;flex-direction:column;gap:6px;pointer-events:none;align-items:center}#toast div{background:#12171cee;border:1px solid var(--acc);border-radius:8px;padding:6px 12px;font-size:13px;box-shadow:0 4px 16px #000a}#toast .tec{border-color:var(--sell);color:#ffb3ae}
 #tip{position:fixed;pointer-events:none;background:#12171cee;border:1px solid var(--ln);border-radius:6px;padding:6px 8px;font-size:12px;display:none;white-space:pre;z-index:5}
 #cp{position:fixed;inset:0;background:#000a;z-index:9;display:flex;align-items:flex-end;justify-content:center}#cp[hidden]{display:none}
 .box{background:var(--panel);border:1px solid var(--ln);border-radius:12px 12px 0 0;padding:12px;width:min(720px,100%);max-height:92%;overflow:auto}
@@ -24,9 +26,9 @@ body{display:flex;flex-direction:column}#c{touch-action:none;display:block;width
 .rw{display:flex;gap:10px;align-items:center;margin:10px 0 4px}.box small{color:var(--mut)}
 @media(max-width:640px){#top h1{display:none}}
 </style></head><body>
-<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v29</small></h1><span class="t" id="tit"></span>
+<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v30</small></h1><span class="t" id="tit"></span>
 <button id="bCa" class="on">Candele</button><select id="sTf"><option value="15000">15 s</option><option value="60000" selected>1 min</option><option value="300000">5 min</option><option value="900000">15 min</option><option value="1800000">30 min</option><option value="3600000">1 ora</option></select>
-<button id="bNe" class="on">Sfondo nero</button><button id="bCo" title="Intensità e contrasto della mappa di calore">Colori ▾</button><button id="bZn" class="on" title="Aree dense di liquidità (bande da 10 $ con molto volume nel libro, che durano almeno 30 s)">Aree</button><button id="bLq" class="on" title="Liquidazioni reali (Bybit, OKX, Binance): rombo rosso = long liquidato, verde = short liquidato">Liq.</button><button id="bSt" class="on" title="Linee dei livelli dove probabilmente stanno gli stop (massimi/minimi recenti e numeri tondi): è un'inferenza">Stop?</button><button id="bSg" class="on" title="Segnali: assorbimento, iceberg, muro ritirato, layering, sweep, tocco di livello">Segnali</button><button id="bRm" title="Dimensione minima del muro ritirato (R) mostrato: clic = cambia (10/15/20/30/50 BTC)">R ≥ 20</button><button id="bBo" class="on">Bolle</button><button id="bB1" title="Bolle più piccole (le bolle si raggruppano per timeframe e passo prezzo)">Bolle −</button><button id="bB2" title="Bolle più grandi">Bolle +</button><button id="bVo" class="on">Volume</button>
+<button id="bNe" class="on">Sfondo nero</button><button id="bCo" title="Intensità e contrasto della mappa di calore">Colori ▾</button><button id="bZn" class="on" title="Aree dense di liquidità (bande da 10 $ con molto volume nel libro, che durano almeno 30 s)">Aree</button><button id="bSn" class="on" title="Allarmi sonori: liquidazioni grosse, prezzo vicino ad aree dense, sweep enormi, feed fermo">Suoni ▾</button><button id="bLq" class="on" title="Liquidazioni reali (Bybit, OKX, Binance): rombo rosso = long liquidato, verde = short liquidato">Liq.</button><button id="bSt" class="on" title="Linee dei livelli dove probabilmente stanno gli stop (massimi/minimi recenti e numeri tondi): è un'inferenza">Stop?</button><button id="bSg" class="on" title="Segnali: assorbimento, iceberg, muro ritirato, layering, sweep, tocco di livello">Segnali</button><button id="bRm" title="Dimensione minima del muro ritirato (R) mostrato: clic = cambia (10/15/20/30/50 BTC)">R ≥ 20</button><button id="bBo" class="on">Bolle</button><button id="bB1" title="Bolle più piccole (le bolle si raggruppano per timeframe e passo prezzo)">Bolle −</button><button id="bB2" title="Bolle più grandi">Bolle +</button><button id="bVo" class="on">Volume</button>
 <button id="bYm" title="Scala prezzo: Auto = si adatta ai dati visibili; Fisso = altezza fissa centrata sul prezzo; Libero = la sposti tu">Prezzo: Fisso</button><button id="bY1" title="Riduci altezza (più zoom sul prezzo)">Altezza −</button><button id="bY2" title="Aumenta altezza (meno zoom sul prezzo)">Altezza +</button>
 <button id="bG1" title="Granularità più fine: righe più sottili ([)">Passo −</button><button id="bGl" title="Passo del prezzo; clic = automatico">Passo: auto</button><button id="bG2" title="Granularità più larga: righe più spesse (])">Passo +</button>
 <button id="bR">Vista intera</button><button id="bU" title="Ricentra il grafico su prezzo e ultime transazioni (tasto C)">Ricentra</button><select id="sFe" title="Sorgente dati del Live"><option value="kr">Kraken spot</option><option value="krf">Kraken futures PF_XBTUSD</option><option value="okp">OKX perp BTC-USDT</option><option value="okx">OKX X-Perp BTC-USD</option><option value="oks">OKX spot BTC-USDT</option></select><button id="bL">Live</button><button id="bTv" title="Apre lo stesso strumento su TradingView (nuova scheda)">TradingView ↗</button><button id="bC">Copia per Claude</button></div>
@@ -35,7 +37,7 @@ body{display:flex;flex-direction:column}#c{touch-action:none;display:block;width
 <label>Contrasto <span id="vc"></span></label><input type="range" id="rc" min="50" max="300" step="5">
 <label>Sensibilità (verso destra: anche i livelli piccoli si accendono) <span id="vs"></span></label><input type="range" id="rs" min="25" max="400" step="5">
 <div class="rw"><button id="hr">Ripristina</button><button id="hx">Chiudi</button></div></div>
-<canvas id="c"></canvas><div id="tip"></div><button id="hq" title="Legenda: significato di lettere e simboli">?</button><div id="hl" hidden></div>
+<canvas id="c"></canvas><div id="tip"></div><button id="hq" title="Legenda: significato di lettere e simboli">?</button><div id="hl" hidden></div><div id="toast"></div><div id="sp" hidden><b>Allarmi sonori</b><label><span>Suoni attivi</span><input type="checkbox" id="snA"></label><label><span>Liquidazione singola ≥ (BTC)</span><input type="number" id="snLs" min="0.1" step="0.5"></label><label><span>Liquidazioni in 30 s ≥ (BTC)</span><input type="number" id="snLt" min="0.5" step="1"></label><label><span>Area densa minima (BTC)</span><input type="number" id="snZm" min="10" step="5"></label><label><span>Avviso se prezzo a meno di ($)</span><input type="number" id="snZd" min="2" step="1"></label><label><span>Sweep minimo in 3 s (BTC)</span><input type="number" id="snSw" min="0.5" step="0.5"></label><div class="rw"><button id="snP1">Prova liquidazione</button><button id="snP2">Prova area</button><button id="snP3">Prova sweep</button><button id="snP4">Prova tecnico</button></div><small>Un suono ogni 20 s al massimo (il tecnico sempre). Gli avvisi compaiono anche scritti. Un suono vuol dire "guarda", non è un segnale di trading.</small></div>
 <div id="cp" hidden><div class="box"><div class="hd"><b>Copia per Claude</b><button id="cpX">Chiudi</button></div>
 <label>La tua lettura (cosa vedi e cosa pensi)</label><textarea id="cpN" rows="4" placeholder="es. muro grosso sull'ask, poco volume sotto, secondo me spinge giù; vorrei capire se regge"></textarea>
 <label>Testo pronto da incollare nella chat (dati della finestra visibile)</label><textarea id="cpT" rows="9" readonly></textarea>
@@ -52,7 +54,7 @@ let L={AX:50,COB:46,SVP:92,CVD:120,TAX:22,VOL:46,FUT:.1};
 let ym="fisso",fixH=60,gran=0;const GR=[1,2,3,4,5,10,20,25,50,100];
 function stepNow(){if(gran)return gran;const px=pmain()/(v.p1-v.p0);return GR.find(a=>a*px>=16)||100}
 const agg=(cells,stp)=>{if(stp<=1)return cells;const m=new Map();for(const k of cells){const b=Math.floor(k[0]/stp)*stp;let o=m.get(b);if(!o){o=[b,0,k[2],0,0];m.set(b,o)}o[1]+=k[1];k[2]===1?o[4]+=k[1]:o[3]+=k[1]}for(const o of m.values())o[2]=o[4]>o[3]?1:(o[3]>0?0:o[2]);return [...m.values()]};
-const opt={candele:true,bolle:true,volume:true,tf:60000,nero:true,pres3:.9,lum:1,con:1,sens:1,bub:1,segn:true,rmin:20,zone:true,liq:true,stp:true};
+const opt={candele:true,bolle:true,volume:true,tf:60000,nero:true,pres3:.9,lum:1,con:1,sens:1,bub:1,segn:true,rmin:20,zone:true,liq:true,stp:true,snd:true,lqS:5,lqT:15,zMin:60,zDist:12,swMin:5};
 try{const o=JSON.parse(localStorage.getItem("mappa_opt")||"{}");Object.assign(opt,o)}catch(e){}
 function saveOpt(){try{localStorage.setItem("mappa_opt",JSON.stringify(opt))}catch(e){}}
 // ---- palette calore: fondo ardesia -> blu -> arancio -> rosso -> giallo -> bianco
@@ -282,6 +284,8 @@ cv.addEventListener("pointerleave",e=>{if(e.pointerType==="mouse"){cross=null;ti
   R("◆","","Rombo verde: short liquidato","Acquisto forzato. Non sono tutte le liquidazioni del mercato.")+
   R("- -","n","Linee \"stop?\"","Massimi/minimi 15 e 60 min e numeri tondi dove di solito stanno gli stop. Arancione sopra, azzurro sotto. È un\'inferenza, non un dato.")+
   R("Σ","n","Aree (bande)","Bande da 10 $ con molta liquidità (≥ max(30 BTC, 5× mediana), ≥ 30 s). Rosso = ask, verde = bid. Bordo pieno = ancora attiva; tratteggiato = finita (ritirata o attraversata).")+
+  '<h4>Allarmi sonori (tasto Suoni)</h4>'+
+  R("♪","","Liquidazione grossa","Singola ≥ soglia o raffica in 30 s.")+R("♪","","Prezzo vicino ad area densa / area finita","Una volta per area.")+R("♪","s","Sweep enorme","Trade aggressivi in 3 s sopra il 99,5° percentile della sessione e sopra il minimo scelto.")+R("♪","s","Feed fermo","Nessun dato da più di 10 s: le letture non sono affidabili.")+
   '<h4>Resto del grafico</h4>'+
   R("●","n","Bolle","Trade aggressivi raggruppati per candela e per passo prezzo: verde = acquisto, rosso = vendita. Il numero è in BTC.")+
   R("▮","n","Candele e volume","Candele del timeframe scelto; in basso volume acquisti (verde) e vendite (rosso).")+
@@ -290,8 +294,14 @@ cv.addEventListener("pointerleave",e=>{if(e.pointerType==="mouse"){cross=null;ti
   R("🔥","n","Mappa di calore","Liquidità nel libro nel tempo; più chiaro/giallo = più grosso. I colori sono relativi alla liquidità tipica del momento.")+
   '<h4>Tasti utili</h4><small>Ricentra (C) torna al prezzo · Passo −/+ ([ ]) cambia la granularità · Altezza −/+ ( + − ) zoom del prezzo · R ≥ cambia il filtro dei muri ritirati · Copia per Claude prepara il testo da incollare in chat.</small>';
   $("hq").onclick=()=>{$("hl").hidden=!$("hl").hidden}})();
+// ---- pannello allarmi
+function snSync(){$("snA").checked=!!opt.snd;$("snLs").value=opt.lqS;$("snLt").value=opt.lqT;$("snZm").value=opt.zMin;$("snZd").value=opt.zDist;$("snSw").value=opt.swMin;$("bSn").classList.toggle("on",!!opt.snd);$("bSn").textContent="Suoni"+(opt.snd?"":" (muti)")+" ▾"}
+$("bSn").onclick=()=>{const h=$("sp");h.hidden=!h.hidden;audio();snSync()};
+for(const [id,k] of [["snLs","lqS"],["snLt","lqT"],["snZm","zMin"],["snZd","zDist"],["snSw","swMin"]])$(id).onchange=e=>{const x=parseFloat(e.target.value);if(x>0){opt[k]=x;saveOpt()}snSync()};
+$("snA").onchange=e=>{opt.snd=e.target.checked;saveOpt();snSync()};
+$("snP1").onclick=()=>{audio();tone("liq");toast("Prova: liquidazione","liq")};$("snP2").onclick=()=>{audio();tone("area");toast("Prova: area densa","area")};$("snP3").onclick=()=>{audio();tone("sweep");toast("Prova: sweep","sweep")};$("snP4").onclick=()=>{audio();tone("tec");toast("Prova: allarme tecnico","tec")};
 // ---- pulsanti
-function sync(){rmSet();$("bCa").classList.toggle("on",opt.candele);$("bBo").classList.toggle("on",opt.bolle);$("bSg").classList.toggle("on",opt.segn);$("bZn").classList.toggle("on",opt.zone);$("bLq").classList.toggle("on",opt.liq);$("bSt").classList.toggle("on",opt.stp);$("bNe").classList.toggle("on",opt.nero);$("bVo").classList.toggle("on",opt.volume);$("sTf").value=String(opt.tf)}
+function sync(){rmSet();snSync();$("bCa").classList.toggle("on",opt.candele);$("bBo").classList.toggle("on",opt.bolle);$("bSg").classList.toggle("on",opt.segn);$("bZn").classList.toggle("on",opt.zone);$("bLq").classList.toggle("on",opt.liq);$("bSt").classList.toggle("on",opt.stp);$("bNe").classList.toggle("on",opt.nero);$("bVo").classList.toggle("on",opt.volume);$("sTf").value=String(opt.tf)}
 $("bCa").onclick=()=>{opt.candele=!opt.candele;saveOpt();sync();dirty=true;draw()};
 $("bNe").onclick=()=>{opt.nero=!opt.nero;buildPal();saveOpt();sync();dirty=true;draw()};
 function bubSet(f){opt.bub=Math.min(4,Math.max(.3,+(opt.bub*f).toFixed(3)));opt.bolle=true;saveOpt();sync();dirty=true;draw()}
@@ -332,7 +342,7 @@ function znStep(s){
     if(q>=thr){if(!z)SG.zn.set(key,{side:key[0]==="a"?"ask":"bid",b:+key.slice(1),t0:t,tl:t,q,max:q,thr});else{z.tl=t;z.q=q;if(q>z.max)z.max=q}}
     else if(z&&q<.5*z.max)znClose(key,z,t,mid)}
   for(const [key,z] of SG.zn)if(!m.has(key))znClose(key,z,t,mid)}
-function znClose(key,z,t,mid){SG.zn.delete(key);if(t-z.t0<ZPERS)return;const lo=z.b*ZB,hi=lo+ZB,att=(z.side==="ask"&&mid>=lo-2)||(z.side==="bid"&&mid<=hi+2);ZN.push({side:z.side,b:z.b,t0:z.t0,t1:t,max:z.max,esito:att?"attraversata/consumata":"ritirata"})}
+function znClose(key,z,t,mid){SG.zn.delete(key);if(t-z.t0<ZPERS)return;const lo=z.b*ZB,hi=lo+ZB,att=(z.side==="ask"&&mid>=lo-2)||(z.side==="bid"&&mid<=hi+2);ZN.push({side:z.side,b:z.b,t0:z.t0,t1:t,max:z.max,esito:att?"attraversata/consumata":"ritirata"});if(live&&Date.now()-t<5000&&z.max>=opt.zMin&&Math.abs(mid-(lo+ZB/2))<=40)alarm("fine","Area densa "+z.side+" "+lo+"–"+hi+" ("+z.max.toFixed(0)+" BTC) "+(att?"attraversata/consumata":"ritirata"),"zf"+z.side+z.b+z.t0,1e9)}
 function znAll(){const a=[];for(const z of ZN)a.push(z);for(const z of SG.zn.values())if(z.tl-z.t0>=ZPERS)a.push({side:z.side,b:z.b,t0:z.t0,t1:null,max:z.max,q:z.q,esito:"attiva"});return a}
 const med=a=>{if(!a.length)return 0;const b=a.slice().sort((x,y)=>x-y);return b[b.length>>1]};
 function sgStep(s){
@@ -401,8 +411,26 @@ function sgAll(){sgReset();for(const s of S)sgStep(s)}
 let ws=null,bids=new Map(),asks=new Map(),timer=null;
 let pingT=null;const FE={krf:"Kraken Futures PF_XBTUSD perp (libro completo)",kr:"Kraken BTC/USD spot (libro 100 livelli)",okp:"OKX BTC-USDT-SWAP perp (libro 400 livelli, contratti da 0.01 BTC)",okx:"OKX X-Perp BTC-USD_UM_XPERP-310404 (contratti da 0.0001 BTC)",oks:"OKX BTC-USDT spot (libro 400 livelli)"};
 function addTrade(t){TR.push(t);CV.push((CV.length?CV[CV.length-1]:0)+t[3]*t[2]);const b=Math.floor(t[1]);let o=svp.get(b);if(!o){o={b:0,s:0};svp.set(b,o)}t[3]>0?o.b+=t[2]:o.s+=t[2]}
+// ---- allarmi sonori (solo in Live)
+let AC=null,lastSnd=0,lastKey={},lastTick=0,SWH=[],swThr=0;
+function audio(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state==="suspended")AC.resume();return AC}
+addEventListener("pointerdown",audio);addEventListener("keydown",audio);
+const AL={liq:{seq:[[660,.12],[880,.2]],type:"sine",vol:.2},area:{seq:[[523,.1],[659,.1],[784,.18]],type:"triangle",vol:.22},fine:{seq:[[784,.12],[523,.22]],type:"triangle",vol:.22},sweep:{seq:[[220,.4]],type:"sawtooth",vol:.1},tec:{seq:[[880,.18],[440,.18],[880,.18],[440,.18]],type:"square",vol:.1}};
+function tone(k){const a=audio(),d=AL[k];if(!a)return;let t=a.currentTime;for(const [f,du] of d.seq){const o=a.createOscillator(),g=a.createGain();o.type=d.type;o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(d.vol,t+.015);g.gain.exponentialRampToValueAtTime(.0001,t+du);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+du+.03);t+=du*.9}}
+function toast(m,k){const b=$("toast"),e=document.createElement("div");if(k==="tec")e.className="tec";e.textContent=fmtT(Date.now(),false)+" · "+m;b.appendChild(e);while(b.children.length>3)b.removeChild(b.firstChild);setTimeout(()=>e.remove(),k==="tec"?12000:7000)}
+function alarm(kind,msg,key,cool,force){const now=Date.now();if(!live&&!force)return;if(key){if(now-(lastKey[key]||0)<(cool||300000))return;lastKey[key]=now}
+  toast(msg,kind);if(!opt.snd)return;if(kind!=="tec"&&now-lastSnd<20000)return;lastSnd=now;tone(kind)}
+function lqAlarm(t,p,q,v,lg){if(!live||Date.now()-t>30000)return;const what=(lg?"long":"short")+" liquidato";
+  if(q>=opt.lqS)alarm("liq","Liquidazione grossa "+v+": "+what+" "+q.toFixed(2)+" BTC @ "+p.toFixed(0),"lq"+t+v,1e9);
+  let sum=0;for(let i=LQ.length-1;i>=0&&LQ[i].t>=t-30000;i--)sum+=LQ[i].q;if(sum>=opt.lqT)alarm("liq","Liquidazioni: "+sum.toFixed(1)+" BTC in 30 s","lqsum",60000)}
+function alarmTick(mid,now){lastTick=now;
+  for(const [key,z] of SG.zn){if(z.al||z.tl-z.t0<ZPERS||z.q<opt.zMin)continue;const lo=z.b*ZB,hi=lo+ZB,d=z.side==="ask"?lo-mid:mid-hi;if(d<=opt.zDist&&d>=-3){z.al=true;alarm("area","Prezzo vicino ad area densa "+z.side+" "+lo+"–"+hi+" ("+z.q.toFixed(0)+" BTC), a "+Math.max(0,d).toFixed(0)+" $","za"+key+z.t0,1e9)}}
+  let bv=0,sv=0;for(let j=TR.length-1;j>=0&&TR[j][0]>=now-3000;j--){TR[j][3]>0?bv+=TR[j][2]:sv+=TR[j][2]}const mx=Math.max(bv,sv);SWH.push(mx);if(SWH.length>3600)SWH.shift();
+  if(SWH.length>=300&&SWH.length%20===0){const a=SWH.slice().sort((x,y)=>x-y);swThr=a[Math.floor(a.length*.995)]}
+  const thr=Math.max(opt.swMin,SWH.length>=300?swThr:opt.swMin*6);if(mx>=thr)alarm("sweep","Sweep enorme: "+(bv>sv?"acquisti ":"vendite ")+mx.toFixed(1)+" BTC in 3 s (soglia "+thr.toFixed(1)+")","sw"+(bv>sv?"b":"s"),20000)}
+setInterval(()=>{if(live&&lastTick&&(Date.now()-lastTick>10000||(ws&&ws.readyState>1)))alarm("tec","FEED FERMO: nessun dato da "+Math.round((Date.now()-lastTick)/1000)+" s — controlla la connessione","tec",60000)},2000);
 // ---- liquidazioni reali (feed pubblici Bybit, OKX, Binance): long liquidato = vendita forzata
-function lqAdd(t,p,q,v,lg){if(!(q>0)||!(p>0))return;LQ.push({t,p,q,v,lg});if(LQ.length>3000)LQ.shift();dirty=true}
+function lqAdd(t,p,q,v,lg){if(!(q>0)||!(p>0))return;LQ.push({t,p,q,v,lg});if(LQ.length>3000)LQ.shift();dirty=true;lqAlarm(t,p,q,v,lg)}
 function lqStop(){for(const w of wsl){try{w.onmessage=null;w.onclose=null;w.close()}catch(e){}}wsl=[]}
 function lqStart(){lqStop();
   try{const b=new WebSocket("wss://stream.bybit.com/v5/public/linear");wsl.push(b);b.onopen=()=>{b.send(JSON.stringify({op:"subscribe",args:["allLiquidation.BTCUSDT"]}));b.__p=setInterval(()=>{try{b.send(JSON.stringify({op:"ping"}))}catch(e){}},20000)};
@@ -427,7 +455,7 @@ async function resumeLive(){try{const db=await idbOpen();const all=await idbDo(d
     const S2=[],T2=[];LQ=[];for(const [,c] of ch){for(const x of c.s)S2.push(x);for(const x of c.tr)T2.push(x);for(const x of c.lq||[])LQ.push(x)}if(S2.length<2)return false;
     $("sFe").value=meta.fe;S=S2;TR=T2;EV=[];const lastS=S[S.length-1];S.push({t:lastS.t+1,mid:lastS.mid,c:[],gap:true});savedT=lastS.t;
     prep();sgAll();$("bL").classList.add("on");$("bL").textContent="Replay";liveStart(true);return true}catch(e){return false}}
-function liveStart(keep){stopWs();lqStart();
+function liveStart(keep){stopWs();lqStart();lastTick=Date.now();SWH=[];
   if(!keep){S=[];TR=[];CV=[];svp=new Map();sgReset();savedT=0;LQ=[];idbClear()}EV=[];bids.clear();asks.clear();live=true;const fe=$("sFe").value;title="LIVE "+FE[fe];$("tit").textContent=title;clearInterval(pingT);
   if(fe==="kr"){ws=new WebSocket("wss://ws.kraken.com/v2");
   ws.onopen=()=>{ws.send(JSON.stringify({method:"subscribe",params:{channel:"book",symbol:["BTC/USD"],depth:100}}));ws.send(JSON.stringify({method:"subscribe",params:{channel:"trade",symbol:["BTC/USD"]}}))};
@@ -453,7 +481,7 @@ function liveStart(keep){stopWs();lqStart();
   timer=setInterval(()=>{if(!bids.size||!asks.size)return;const bb=Math.max(...bids.keys()),ba=Math.min(...asks.keys()),cells=new Map();
     for(const [p,q] of bids)if(p>=bb-80){const k=Math.floor(p)+"b",o=cells.get(k)||[Math.floor(p),0,0];o[1]+=q;cells.set(k,o)}
     for(const [p,q] of asks)if(p<=ba+80){const k=Math.floor(p)+"a",o=cells.get(k)||[Math.floor(p),0,1];o[1]+=q;cells.set(k,o)}
-    const now=Date.now();S.push({t:now,mid:(bb+ba)/2,c:[...cells.values()].map(o=>[o[0],+o[1].toFixed(2),o[2]])});
+    const now=Date.now();alarmTick((bb+ba)/2,now);S.push({t:now,mid:(bb+ba)/2,c:[...cells.values()].map(o=>[o[0],+o[1].toFixed(2),o[2]])});
     sgStep(S[S.length-1]);if(S.length>7200)S.shift();while(TR.length>1&&TR[0][0]<S[0].t-5000){TR.shift();CV.shift()}
     if(S.length===1||S.length%30===0){const q=[];for(const s of S.slice(-200))for(const k of s.c)q.push(k[1]);q.sort((a,b)=>a-b);if(q.length){QREF=Math.max(.05,q[q.length>>1]);QMAX=Math.max(QREF*4,q[Math.floor(q.length*.995)])}}
     if(S.length<3||(keep&&!window.__fitDone&&(window.__fitDone=1)))fit();else if(follow){const span=v.t1-v.t0,fut=span*L.FUT;v.t1=now+fut;v.t0=v.t1-span;const c=(bb+ba)/2;if(c<v.p0+8||c>v.p1-8){const m=v.p1-v.p0;v.p0=c-m/2;v.p1=c+m/2}}
