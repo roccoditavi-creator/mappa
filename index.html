@@ -26,7 +26,7 @@ body{display:flex;flex-direction:column}#c{touch-action:none;display:block;width
 .rw{display:flex;gap:10px;align-items:center;margin:10px 0 4px}.box small{color:var(--mut)}
 @media(max-width:640px){#top h1{display:none}}
 #pp{width:340px;max-height:calc(100vh - 110px);overflow:auto}#pp textarea{width:100%;box-sizing:border-box;background:#12171c;color:var(--fg);border:1px solid var(--ln);border-radius:6px;font:11px ui-monospace,Consolas,monospace;margin-top:6px}#pp table{width:100%;border-collapse:collapse;margin:6px 0;font-size:11px}#pp td,#pp th{padding:2px 3px;text-align:right;border-bottom:1px solid var(--ln)}#pp td:first-child,#pp th:first-child{text-align:left}#pp .vd{margin:6px 0;padding:6px 8px;border-radius:6px;background:#12171c;line-height:1.4}</style></head><body>
-<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v37</small></h1><span class="t" id="tit"></span>
+<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v38</small></h1><span class="t" id="tit"></span>
 <button id="bCa" class="on">Candele</button><select id="sTf"><option value="15000">15 s</option><option value="60000" selected>1 min</option><option value="300000">5 min</option><option value="900000">15 min</option><option value="1800000">30 min</option><option value="3600000">1 ora</option></select>
 <button id="bNe" class="on">Sfondo nero</button><button id="bCo" title="Intensità e contrasto della mappa di calore">Colori ▾</button><button id="bZn" class="on" title="Aree dense di liquidità (bande da 10 $ con molto volume nel libro, che durano almeno 30 s)">Aree</button><button id="bSn" class="on" title="Allarmi sonori: liquidazioni grosse, prezzo vicino ad aree dense, sweep enormi, feed fermo">Suoni ▾</button><button id="bLq" class="on" title="Liquidazioni reali (Bybit, OKX, Binance): rombo rosso = long liquidato, verde = short liquidato">Liq.</button><button id="bSt" class="on" title="Linee dei livelli dove probabilmente stanno gli stop (massimi/minimi recenti e numeri tondi): è un'inferenza">Stop?</button><button id="bSg" class="on" title="Segnali: assorbimento, iceberg, muro ritirato, layering, sweep, tocco di livello">Segnali</button><button id="bRm" title="Dimensione minima del muro ritirato (R) mostrato: clic = cambia (10/15/20/30/50 BTC)">R ≥ 20</button><button id="bBo" class="on">Bolle</button><button id="bB1" title="Bolle più piccole (le bolle si raggruppano per timeframe e passo prezzo)">Bolle −</button><button id="bB2" title="Bolle più grandi">Bolle +</button><button id="bVo" class="on">Volume</button>
 <button id="bPv" class="on" title="Previsioni direzionali (freccia verde su, rossa giù, grigia neutra) con verifica automatica dopo l'orizzonte scelto">Previsioni ▾</button><button id="bYm" title="Scala prezzo: Auto = si adatta ai dati visibili; Fisso = altezza fissa centrata sul prezzo; Libero = la sposti tu">Prezzo: Fisso</button><button id="bY1" title="Riduci altezza (più zoom sul prezzo)">Altezza −</button><button id="bY2" title="Aumenta altezza (meno zoom sul prezzo)">Altezza +</button>
@@ -43,8 +43,8 @@ body{display:flex;flex-direction:column}#c{touch-action:none;display:block;width
 <label><span>Orizzonte (minuti)</span><select id="pvH"><option value="1">1</option><option value="5">5</option><option value="15">15</option><option value="30">30</option></select></label>
 <label><span>Costo andata e ritorno (%)</span><input type="number" id="pvC" min="0" step="0.01"></label>
 <div id="pvW" class="vd" hidden></div><div id="pvS"></div>
-<div class="rw"><button id="pvE">Copia registro per Claude</button><button id="pvD">Scarica CSV</button><button id="pvF" title="Scegli una volta la cartella: la mappa vi scrive da sola il file previsioni_mappa.csv ad ogni verifica (Chrome/Edge sul PC)">Cartella di salvataggio…</button><button id="pvG" hidden>Riattiva salvataggio</button><button id="pvR">Mostra regole</button><button id="pvI">Importa regole</button><button id="pvZ">Azzera registro</button></div>
-<textarea id="pvT" rows="6" hidden></textarea><div id="pvFs" style="color:var(--mut);margin-top:4px"></div><span id="pvM" style="color:var(--mut)"></span>
+<div class="rw"><button id="pvE">Copia registro per Claude</button><button id="pvD">Scarica CSV</button><button id="pvR">Mostra regole</button><button id="pvI">Importa regole</button><button id="pvZ">Azzera registro</button></div>
+<textarea id="pvT" rows="6" hidden></textarea><span id="pvM" style="color:var(--mut)"></span>
 <small>Una previsione ogni N minuti a orario fisso (non guarda i risultati prima di farla). Le regole iniziali sono ipotesi, non provate. Il registro resta nel browser. Ogni cambio di regole è una nuova versione e si valuta solo sulle previsioni nuove.</small></div>
 <div id="cp" hidden><div class="box"><div class="hd"><b>Copia per Claude</b><button id="cpX">Chiudi</button></div>
 <label>La tua lettura (cosa vedi e cosa pensi)</label><textarea id="cpN" rows="4" placeholder="es. muro grosso sull'ask, poco volume sotto, secondo me spinge giù; vorrei capire se regge"></textarea>
@@ -551,7 +551,7 @@ function pvTick(now){if(!live)return;
   let ch=false;for(const r of PV){
     if(!r.res){const x=pvRes(r,r.h,now);if(x){r.res=x;ch=true;if(!x.void)toast("Previsione "+fmtT(r.t,false)+" "+(r.dir>0?"▲":r.dir<0?"▼":"◆")+" → "+(x.ok?"✓":"✗")+" "+(x.ret>=0?"+":"")+x.ret.toFixed(2)+"%")}}
     if(r.x&&r.res&&!r.res.void)for(const H of PVX){if(H>r.h&&!(H in r.x)){const y=pvRes(r,H,now);if(y){r.x[H]=y;ch=true}}}}
-  if(ch){pvSave();dirty=true;pvFlush();if(!$("pp").hidden)pvPanel()}
+  if(ch){pvSave();dirty=true;if(!$("pp").hidden)pvPanel()}
   if(!opt.pvOn||S.length<120)return;
   const slot=Math.floor(now/(opt.pvH*60000));if(PVslot<0){PVslot=slot;return}
   if(slot!==PVslot){PVslot=slot;pvMake(now);if(!$("pp").hidden)pvPanel()}}
@@ -580,37 +580,12 @@ function pvCsv(all){const rows=(all?PV:PV.slice(-200)).filter(r=>r.res&&!r.res.v
   const L=["# REGISTRO PREVISIONI MAPPA — regole correnti: "+JSON.stringify(P)+" ; costo "+opt.pvCost+"% ; "+rows.length+" righe verificate"+(all?"":" (ultime 200)")+" ; v5/v30 = escursione max-min del prezzo negli ultimi 5/30 min in %; fermo=1 se la regola vmin ha forzato neutra",hd.join(",")];
   const xc=(r,H)=>{const y=r.x&&r.x[H];return y&&!y.void?[y.ret,y.ok?1:0,y.net===null?"":y.net]:["","",""]};
   for(const r of rows)L.push([new Date(r.t).toISOString(),r.ver,r.h,r.fe,r.dir,r.sc,r.p,r.res.p1,r.res.ret,r.res.ok?1:0,r.res.net===null?"":r.res.net].concat(ks.map(k=>r.f[k]||0),[r.c?r.c.v5:"",r.c?r.c.v30:"",r.c?r.c.hr:"",r.q?1:0],xc(r,15),xc(r,30)).join(","));return L.join("\n")}
-// ---- salvataggio automatico del registro in una cartella (File System Access: Chrome/Edge sul PC)
-let PVDIR=null,PVB=false,PVL=0;
-const pvIdb=()=>new Promise((ok,ko)=>{const r=indexedDB.open("mappa_pvdir",1);r.onupgradeneeded=()=>r.result.createObjectStore("k");r.onsuccess=()=>ok(r.result);r.onerror=()=>ko(r.error)});
-async function pvDirSave(h){try{const db=await pvIdb();await new Promise((ok,ko)=>{const t=db.transaction("k","readwrite");t.objectStore("k").put(h,"dir");t.oncomplete=ok;t.onerror=()=>ko(t.error)});db.close()}catch(e){}}
-async function pvDirState(){const el=$("pvFs");if(!window.showDirectoryPicker){el.textContent="Salvataggio in cartella non disponibile in questo browser (serve Chrome o Edge sul PC): usa Scarica CSV.";return}
-  if(!PVDIR){el.textContent="Salvataggio automatico: non impostato.";$("pvG").hidden=true;return}
-  let p="prompt";try{p=await PVDIR.queryPermission({mode:"readwrite"})}catch(e){}
-  $("pvG").hidden=p==="granted";el.textContent=p==="granted"?"Salvataggio automatico attivo nella cartella «"+PVDIR.name+"».":"Cartella «"+PVDIR.name+"»: premi Riattiva salvataggio (il browser chiede il permesso ad ogni apertura)."}
-async function pvDirLoad(){try{const db=await pvIdb();const h=await new Promise((ok,ko)=>{const q=db.transaction("k").objectStore("k").get("dir");q.onsuccess=()=>ok(q.result);q.onerror=()=>ko(q.error)});db.close();if(h)PVDIR=h}catch(e){}pvDirState()}
-async function pvFlush(force){if(!PVDIR||PVB)return;const now=Date.now();if(!force&&now-PVL<20000)return;PVB=true;
-  try{if(await PVDIR.queryPermission({mode:"readwrite"})!=="granted"){pvDirState();return}
-    const fh=await PVDIR.getFileHandle("previsioni_mappa.csv",{create:true});let old="";try{old=await(await fh.getFile()).text()}catch(e){}
-    const cur=pvCsv(true).split("\n"),have=new Set(cur.slice(2).map(l=>l.split(",")[0]));
-    const keep=old.split("\n").filter(l=>l&&l[0]!=="#"&&!l.startsWith("t_utc")&&!have.has(l.split(",")[0]));
-    const rows=cur.slice(2).concat(keep).sort();
-    const w=await fh.createWritable();await w.write(cur.slice(0,2).join("\n")+"\n"+rows.join("\n")+"\n");await w.close();PVL=Date.now();
-    $("pvFs").textContent="Salvato alle "+new Date().toLocaleTimeString("it-IT")+" in «"+PVDIR.name+"»: "+rows.length+" righe."}
-  catch(e){$("pvFs").textContent="Salvataggio non riuscito: "+(e&&e.message||e)}finally{PVB=false}}
-$("pvF").onclick=async()=>{if(!window.showDirectoryPicker){pvDirState();return}
-  let err="";try{const h=await window.showDirectoryPicker({mode:"readwrite"});PVDIR=h;await pvDirSave(h);await pvFlush(true)}catch(e){err=(e&&e.name||"errore")+": "+(e&&e.message||e)}
-  await pvDirState();if(err)$("pvFs").textContent="Cartella non impostata ("+err+"). contesto sicuro: "+window.isSecureContext+", indirizzo: "+location.protocol+"//"+(location.host||"file")+(PVDIR?" | cartella «"+PVDIR.name+"»":"")};
-$("pvG").onclick=async()=>{try{if(PVDIR&&await PVDIR.requestPermission({mode:"readwrite"})==="granted")await pvFlush(true)}catch(e){}pvDirState()};
-setInterval(()=>pvFlush(),60000);pvDirLoad();
 $("bPv").onclick=()=>{const h=$("pp");h.hidden=!h.hidden;pvSync();pvPanel()};
 $("pvA").onchange=e=>{opt.pvOn=e.target.checked;saveOpt();pvSync();dirty=true;draw()};
 $("pvH").onchange=e=>{opt.pvH=+e.target.value;PVslot=-1;saveOpt()};
 $("pvC").onchange=e=>{const x=parseFloat(e.target.value);if(x>=0){opt.pvCost=x;saveOpt()}pvSync()};
 $("pvE").onclick=async()=>{const t=$("pvT");t.hidden=false;t.readOnly=true;t.value=pvCsv(false);try{await navigator.clipboard.writeText(t.value);$("pvM").textContent="Copiato: incollalo nella chat"}catch(e){t.select();$("pvM").textContent="Seleziona e copia a mano"}};
-$("pvD").onclick=async()=>{if(PVDIR){try{if(await PVDIR.queryPermission({mode:"readwrite"})!=="granted")await PVDIR.requestPermission({mode:"readwrite"});
-      if(await PVDIR.queryPermission({mode:"readwrite"})==="granted"){await pvFlush(true);$("pvM").textContent="Salvato nella cartella scelta («"+PVDIR.name+"»), non in Download";pvDirState();return}}catch(e){}}
-  const b=new Blob([pvCsv(true)],{type:"text/csv"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="previsioni_mappa_"+new Date().toISOString().slice(0,10)+".csv";document.body.appendChild(a);a.click();a.remove();$("pvM").textContent=PVDIR?"Permesso negato: scaricato in Download":"Nessuna cartella scelta: scaricato in Download (usa Cartella di salvataggio…)"}
+$("pvD").onclick=()=>{const b=new Blob([pvCsv(true)],{type:"text/csv"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="previsioni_mappa_"+new Date().toISOString().slice(0,10)+".csv";document.body.appendChild(a);a.click();a.remove();$("pvM").textContent="Scaricato in Download: previsioni_mappa_"+new Date().toISOString().slice(0,10)+".csv"};
 $("pvR").onclick=()=>{const t=$("pvT");t.hidden=false;t.readOnly=false;t.value=JSON.stringify(opt.pvP,null,1);$("pvM").textContent="Regole correnti (modificabili: incolla qui nuove regole e premi Importa)"};
 $("pvI").onclick=()=>{const t=$("pvT");try{const P=JSON.parse(t.value);if(!P||typeof P.ver!=="string"||!(P.th>0)||typeof P.w!=="object")throw 0;for(const k in P.w)if(typeof P.w[k]!=="number")throw 0;if(P.vmin!==undefined&&!(typeof P.vmin==="number"&&P.vmin>=0))throw 0;
     if(PV.some(r=>r.ver===P.ver)&&JSON.stringify(P)!==JSON.stringify(opt.pvP)){$("pvM").textContent="Quel nome di versione esiste già: usa un nome nuovo (es. v2-...)";return}
