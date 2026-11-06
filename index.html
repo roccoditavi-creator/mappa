@@ -26,7 +26,7 @@ body{display:flex;flex-direction:column}#c{touch-action:none;display:block;width
 .rw{display:flex;gap:10px;align-items:center;margin:10px 0 4px}.box small{color:var(--mut)}
 @media(max-width:640px){#top h1{display:none}}
 #pp{width:340px;max-height:calc(100vh - 110px);overflow:auto}#pp textarea{width:100%;box-sizing:border-box;background:#12171c;color:var(--fg);border:1px solid var(--ln);border-radius:6px;font:11px ui-monospace,Consolas,monospace;margin-top:6px}#pp table{width:100%;border-collapse:collapse;margin:6px 0;font-size:11px}#pp td,#pp th{padding:2px 3px;text-align:right;border-bottom:1px solid var(--ln)}#pp td:first-child,#pp th:first-child{text-align:left}#pp .vd{margin:6px 0;padding:6px 8px;border-radius:6px;background:#12171c;line-height:1.4}</style></head><body>
-<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v39</small></h1><span class="t" id="tit"></span>
+<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v40</small></h1><span class="t" id="tit"></span>
 <button id="bCa" class="on">Candele</button><select id="sTf"><option value="15000">15 s</option><option value="60000" selected>1 min</option><option value="300000">5 min</option><option value="900000">15 min</option><option value="1800000">30 min</option><option value="3600000">1 ora</option></select>
 <button id="bNe" class="on">Sfondo nero</button><button id="bCo" title="Intensità e contrasto della mappa di calore">Colori ▾</button><button id="bZn" class="on" title="Aree dense di liquidità (bande da 10 $ con molto volume nel libro, che durano almeno 30 s)">Aree</button><button id="bSn" class="on" title="Allarmi sonori: liquidazioni grosse, prezzo vicino ad aree dense, sweep enormi, feed fermo">Suoni ▾</button><button id="bLq" class="on" title="Liquidazioni reali (Bybit, OKX, Binance): rombo rosso = long liquidato, verde = short liquidato">Liq.</button><button id="bSt" class="on" title="Linee dei livelli dove probabilmente stanno gli stop (massimi/minimi recenti e numeri tondi): è un'inferenza">Stop?</button><button id="bSg" class="on" title="Segnali: assorbimento, iceberg, muro ritirato, layering, sweep, tocco di livello">Segnali</button><button id="bRm" title="Dimensione minima del muro ritirato (R) mostrato: clic = cambia (10/15/20/30/50 BTC)">R ≥ 20</button><button id="bBo" class="on">Bolle</button><button id="bB1" title="Bolle più piccole (le bolle si raggruppano per timeframe e passo prezzo)">Bolle −</button><button id="bB2" title="Bolle più grandi">Bolle +</button><button id="bVo" class="on">Volume</button>
 <button id="bPv" class="on" title="Previsioni direzionali (freccia verde su, rossa giù, grigia neutra) con verifica automatica dopo l'orizzonte scelto">Previsioni ▾</button><button id="bYm" title="Scala prezzo: Auto = si adatta ai dati visibili; Fisso = altezza fissa centrata sul prezzo; Libero = la sposti tu">Prezzo: Fisso</button><button id="bY1" title="Riduci altezza (più zoom sul prezzo)">Altezza −</button><button id="bY2" title="Aumenta altezza (meno zoom sul prezzo)">Altezza +</button>
@@ -42,8 +42,8 @@ body{display:flex;flex-direction:column}#c{touch-action:none;display:block;width
 <label><span>Previsioni attive (solo in Live)</span><input type="checkbox" id="pvA"></label>
 <label><span>Orizzonte (minuti)</span><select id="pvH"><option value="1">1</option><option value="5">5</option><option value="15">15</option><option value="30">30</option></select></label>
 <label><span>Costo andata e ritorno (%)</span><input type="number" id="pvC" min="0" step="0.01"></label>
-<div id="pvW" class="vd" hidden></div><div id="pvS"></div>
-<div class="rw"><button id="pvE">Copia registro per Claude</button><button id="pvD">Scarica CSV</button><button id="pvR">Mostra regole</button><button id="pvI">Importa regole</button><button id="pvZ">Azzera registro</button></div>
+<div id="pvW" class="vd" hidden></div><div id="pvS"></div><div id="arS"></div>
+<div class="rw"><button id="pvE">Copia registro per Claude</button><button id="pvD">Scarica CSV</button><button id="pvAD" title="Scarica il registro delle aree dense (esito, contatto, reazione a 5 e 15 min)">Scarica aree CSV</button><button id="pvR">Mostra regole</button><button id="pvI">Importa regole</button><button id="pvZ">Azzera registro</button></div>
 <textarea id="pvT" rows="6" hidden></textarea><span id="pvM" style="color:var(--mut)"></span>
 <small>Una previsione ogni N minuti a orario fisso (non guarda i risultati prima di farla). Le regole iniziali sono ipotesi, non provate. Il registro resta nel browser. Ogni cambio di regole è una nuova versione e si valuta solo sulle previsioni nuove.</small></div>
 <div id="cp" hidden><div class="box"><div class="hd"><b>Copia per Claude</b><button id="cpX">Chiudi</button></div>
@@ -367,8 +367,9 @@ function znStep(s){
   for(const [key,q] of m){const z=SG.zn.get(key);
     if(q>=thr){if(!z)SG.zn.set(key,{side:key[0]==="a"?"ask":"bid",b:+key.slice(1),t0:t,tl:t,q,max:q,thr});else{z.tl=t;z.q=q;if(q>z.max)z.max=q}}
     else if(z&&q<.5*z.max)znClose(key,z,t,mid)}
-  for(const [key,z] of SG.zn)if(!m.has(key))znClose(key,z,t,mid)}
-function znClose(key,z,t,mid){SG.zn.delete(key);if(t-z.t0<ZPERS)return;const lo=z.b*ZB,hi=lo+ZB,att=(z.side==="ask"&&mid>=lo-2)||(z.side==="bid"&&mid<=hi+2);ZN.push({side:z.side,b:z.b,t0:z.t0,t1:t,max:z.max,esito:att?"attraversata/consumata":"ritirata"});if(live&&Date.now()-t<5000&&z.max>=opt.zMin&&Math.abs(mid-(lo+ZB/2))<=40)alarm("fine","Area densa "+z.side+" "+lo+"–"+hi+" ("+z.max.toFixed(0)+" BTC) "+(att?"attraversata/consumata":"ritirata"),"zf"+z.side+z.b+z.t0,1e9)}
+  for(const [key,z] of SG.zn)if(!m.has(key))znClose(key,z,t,mid);
+  if(live)for(const [key,z] of SG.zn)if(z.tl-z.t0>=ZPERS)arTrack(z,mid,t)}
+function znClose(key,z,t,mid){SG.zn.delete(key);if(t-z.t0<ZPERS)return;const lo=z.b*ZB,hi=lo+ZB,att=(z.side==="ask"&&mid>=lo-2)||(z.side==="bid"&&mid<=hi+2);ZN.push({side:z.side,b:z.b,t0:z.t0,t1:t,max:z.max,esito:att?"attraversata/consumata":"ritirata"});if(z.rec){z.rec.t1=t;z.rec.esito=att?"attraversata":"ritirata";arSave()}if(live&&Date.now()-t<5000&&z.max>=opt.zMin&&Math.abs(mid-(lo+ZB/2))<=40)alarm("fine","Area densa "+z.side+" "+lo+"–"+hi+" ("+z.max.toFixed(0)+" BTC) "+(att?"attraversata/consumata":"ritirata"),"zf"+z.side+z.b+z.t0,1e9)}
 function znAll(){const a=[];for(const z of ZN)a.push(z);for(const z of SG.zn.values())if(z.tl-z.t0>=ZPERS)a.push({side:z.side,b:z.b,t0:z.t0,t1:null,max:z.max,q:z.q,esito:"attiva"});return a}
 const med=a=>{if(!a.length)return 0;const b=a.slice().sort((x,y)=>x-y);return b[b.length>>1]};
 function sgStep(s){
@@ -527,11 +528,38 @@ async function pvIdbSave(){try{const db=await pvIdbOpen();await new Promise((ok,
 async function pvIdbLoad(){try{const db=await pvIdbOpen();const arr=await new Promise((ok,ko)=>{const q=db.transaction("k").objectStore("k").get("pv");q.onsuccess=()=>ok(q.result||[]);q.onerror=()=>ko(q.error)});db.close();
     const have=new Set(PV.map(r=>r.t+"|"+r.fe));let add=0;for(const r of arr)if(!have.has(r.t+"|"+r.fe)){PV.push(r);add++}
     if(add){PV.sort((a,b)=>a.t-b.t);try{localStorage.setItem("mappa_pv",JSON.stringify(PV))}catch(e){}dirty=true}}catch(e){}}
+// ---- registro delle aree dense: esito, contatto del prezzo e reazione a 5 e 15 minuti
+let AR=[],AX=new Map();
+try{AR=JSON.parse(localStorage.getItem("mappa_ar")||"[]")}catch(e){AR=[]}
+for(const r of AR)AX.set(r.k,r);
+function arSave(){try{if(AR.length>2000)AR=AR.slice(-2000);localStorage.setItem("mappa_ar",JSON.stringify(AR))}catch(e){PVERR=true}pvIdbPut("ar",AR)}
+async function pvIdbPut(key,val){try{const db=await pvIdbOpen();await new Promise((ok,ko)=>{const t=db.transaction("k","readwrite");t.objectStore("k").put(JSON.parse(JSON.stringify(val)),key);t.oncomplete=ok;t.onerror=()=>ko(t.error)});db.close()}catch(e){PVERR=true}}
+async function arIdbLoad(){try{const db=await pvIdbOpen();const arr=await new Promise((ok,ko)=>{const q=db.transaction("k").objectStore("k").get("ar");q.onsuccess=()=>ok(q.result||[]);q.onerror=()=>ko(q.error)});db.close();let add=0;for(const r of arr)if(!AX.has(r.k)){AR.push(r);AX.set(r.k,r);add++}if(add){AR.sort((a,b)=>a.t0-b.t0);try{localStorage.setItem("mappa_ar",JSON.stringify(AR))}catch(e){}}}catch(e){}}
+function arTrack(z,mid,t){const k=z.side+"|"+z.b+"|"+z.t0;let r=AX.get(k);
+  if(!r){r={k,t0:z.t0,side:z.side,b:z.b,max:z.max,q0:+z.q.toFixed(1),fe:$("sFe").value,t1:null,esito:null,touch:null,r5:null,r15:null};AX.set(k,r);AR.push(r);arSave()}
+  z.rec=r;if(z.max>r.max)r.max=z.max;
+  if(!r.touch){const lo=z.b*ZB,hi=lo+ZB,att=z.side==="ask"?mid>=lo-2:mid<=hi+2;if(att){r.touch={t,p:mid};arSave()}}}
+function arTick(now){let ch=false;for(let i=AR.length-1;i>=0&&i>AR.length-300;i--){const r=AR[i],ts=r.touch;if(!ts)continue;
+    for(const H of [5,15]){const key="r"+H;if(r[key]!==null&&r[key]!==undefined)continue;const tg=ts.t+H*60000;if(now<tg)continue;const last=S[S.length-1];
+      if(!last||last.t<tg-2000||now-tg>120000||r.fe!==$("sFe").value){r[key]="x";ch=true;continue}
+      const p1=midAt(tg),mv=(p1-ts.p)/ts.p*100;r[key]=+(r.side==="ask"?-mv:mv).toFixed(4);ch=true}}
+  if(ch){arSave();if(!$("pp").hidden)arPanel()}}
+function arStats(){const D=AR.filter(r=>r.esito),T=AR.filter(r=>r.touch);
+  const ev=key=>{const v=T.map(r=>r[key]).filter(x=>typeof x==="number"),n=v.length,k=v.filter(x=>x>0).length,kc=v.filter(x=>x>opt.pvCost).length;return{n,k,kc,ci:wilson(k,n),mean:n?v.reduce((a,x)=>a+x,0)/n:0}};
+  return{n:AR.length,chiuse:D.length,rit:D.filter(r=>r.esito==="ritirata").length,att:D.filter(r=>r.esito==="attraversata").length,att_n:T.length,r5:ev("r5"),r15:ev("r15")}}
+function arPanel(){const a=arStats(),el=$("arS");if(!el)return;const pc=(x,n)=>n?(100*x/n).toFixed(0)+"%":"—";
+  const row=(H,q)=>"<tr><td>"+H+"</td><td>"+q.n+"</td><td>"+(q.n?pc(q.k,q.n)+" ["+(100*q.ci[0]).toFixed(0)+"–"+(100*q.ci[1]).toFixed(0)+"]":"—")+"</td><td>"+pc(q.kc,q.n)+"</td><td>"+(q.n?(q.mean>=0?"+":"")+q.mean.toFixed(3)+"%":"—")+"</td></tr>";
+  el.innerHTML="<b>Aree dense</b><small> (registro nel browser, solo da Live)</small><div class=\"vd\">Aree registrate: "+a.n+" · chiuse: "+a.chiuse+" (ritirate "+pc(a.rit,a.chiuse)+", attraversate "+pc(a.att,a.chiuse)+") · toccate dal prezzo: "+a.att_n+"</div>"+
+   "<table><tr><th>dopo contatto</th><th>casi</th><th>reazione</th><th>oltre costo</th><th>media</th></tr>"+row("5 min",a.r5)+row("15 min",a.r15)+"</table>"+
+   "<small>Reazione = il prezzo si allontana dall'area (giù da un'area ask, su da un'area bid). Più di 50% non basta: serve anche superare il costo. Sotto 200 casi non si conclude.</small>"}
+function arCsv(){const L=["t0_utc,t1_utc,durata_s,fonte,lato,banda_da,max_btc,esito,contatto_utc,contatto_prezzo,reaz5_pct,reaz15_pct"];
+  for(const r of AR)L.push([new Date(r.t0).toISOString(),r.t1?new Date(r.t1).toISOString():"",r.t1?Math.round((r.t1-r.t0)/1000):"",r.fe,r.side,r.b*ZB,r.max.toFixed(1),r.esito||"attiva",r.touch?new Date(r.touch.t).toISOString():"",r.touch?r.touch.p.toFixed(1):"",typeof r.r5==="number"?r.r5:"",typeof r.r15==="number"?r.r15:""].join(","));return L.join("\n")}
+$("pvAD").onclick=()=>{const b=new Blob([arCsv()],{type:"text/csv"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="aree_mappa_"+new Date().toISOString().slice(0,10)+".csv";document.body.appendChild(a);a.click();a.remove();$("pvM").textContent="Scaricato in Download: aree_mappa_"+new Date().toISOString().slice(0,10)+".csv"};
 // controllo: il browser conserva i dati fra un'apertura e l'altra?
 let PVBOOT={prev:null,n:1,persist:null};
 async function pvBoot(){try{const p=JSON.parse(localStorage.getItem("mappa_boot")||"null");PVBOOT.prev=p;PVBOOT.n=p?p.n+1:1;localStorage.setItem("mappa_boot",JSON.stringify({n:PVBOOT.n,first:p?p.first:Date.now(),last:Date.now()}))}catch(e){PVERR=true}
   try{if(navigator.storage&&navigator.storage.persist){PVBOOT.persist=await navigator.storage.persisted();if(!PVBOOT.persist)PVBOOT.persist=await navigator.storage.persist()}}catch(e){}
-  await pvIdbLoad();pvStatus()}
+  await pvIdbLoad();await arIdbLoad();pvStatus();arPanel()}
 function pvStatus(){const el=$("pvSt");if(!el)return;let t,c="";
   if(PVERR){t="ATTENZIONE: il browser non permette di salvare i dati su questo indirizzo. Usa il sito https://roccoditavi-creator.github.io/mappa/ oppure installalo come app.";c="#f0625c"}
   else if(PVBOOT.prev){t="Memoria del browser: OK. Questa è l'apertura n. "+PVBOOT.n+" (la prima il "+new Date(PVBOOT.prev.first).toLocaleDateString("it-IT")+"). Previsioni conservate: "+PV.length+(PVBOOT.persist?" · protezione attiva":"")+".";c="#56e084"}
@@ -564,7 +592,7 @@ function pvMake(now){const s=S[S.length-1],P=opt.pvP,f=pvFeat(now,s);let sc=0;fo
   const ctx=pvCtx(now),quiet=P.vmin>0&&ctx.v5<P.vmin;let dir=Math.abs(sc)>=P.th?Math.sign(sc):0;if(quiet)dir=0;
   PV.push({t:now,p:s.mid,dir,sc:+sc.toFixed(3),f,ver:P.ver,h:opt.pvH,fe:$("sFe").value,res:null,c:ctx,q:quiet?1:0,x:{}});const lr=PV[PV.length-1];lr.why=pvWhy(lr);pvSave();dirty=true;
   toast("Previsione "+(lr.dir>0?"▲ SU":lr.dir<0?"▼ GIÙ":"◆ NEUTRA")+" a "+lr.h+" min: "+lr.why,"pv")}
-function pvTick(now){if(!live)return;
+function pvTick(now){if(!live)return;arTick(now);
   let ch=false;for(const r of PV){
     if(!r.res){const x=pvRes(r,r.h,now);if(x){r.res=x;ch=true;if(!x.void)toast("Previsione "+fmtT(r.t,false)+" "+(r.dir>0?"▲":r.dir<0?"▼":"◆")+" → "+(x.ok?"✓":"✗")+" "+(x.ret>=0?"+":"")+x.ret.toFixed(2)+"%")}}
     if(r.x&&r.res&&!r.res.void)for(const H of PVX){if(H>r.h&&!(H in r.x)){const y=pvRes(r,H,now);if(y){r.x[H]=y;ch=true}}}}
@@ -579,7 +607,7 @@ function wilson(k,n,z){if(!n)return[0,0];z=z||1.96;const p=k/n,d=1+z*z/n,c=p+z*z
 function pvStats(list,get){get=get||(r=>r.res);const R=list.filter(r=>{const q=get(r);return q&&!q.void}),D=R.filter(r=>r.dir!==0),N=R.filter(r=>r.dir===0),k=D.filter(r=>get(r).ok).length,up=R.filter(r=>get(r).ret>0).length,mv=R.filter(r=>get(r).ret!==0).length;
   const net=D.reduce((a,r)=>a+get(r).net,0),gross=D.reduce((a,r)=>a+r.dir*get(r).ret,0);
   return{n:R.length,nd:D.length,nn:N.length,k,hit:D.length?k/D.length:0,ci:wilson(k,D.length),ci3:wilson(k,D.length,2.394),base:mv>=30?Math.max(up,mv-up)/mv:.5,net:D.length?net/D.length:0,gross:D.length?gross/D.length:0,flat:N.length?N.filter(r=>get(r).ok).length/N.length:0}}
-function pvPanel(){const vers=[...new Set(PV.map(r=>r.ver))],cur=opt.pvP.ver;let h="<table><tr><th>regole</th><th>dir.</th><th>neutre</th><th>esatte</th><th>netto/trade</th></tr>";
+function pvPanel(){arPanel();const vers=[...new Set(PV.map(r=>r.ver))],cur=opt.pvP.ver;let h="<table><tr><th>regole</th><th>dir.</th><th>neutre</th><th>esatte</th><th>netto/trade</th></tr>";
   for(const vv of vers){const a=pvStats(PV.filter(r=>r.ver===vv));h+="<tr><td>"+vv+(vv===cur?" ●":"")+"</td><td>"+a.nd+"</td><td>"+a.nn+"</td><td>"+(a.nd?(100*a.hit).toFixed(0)+"% ["+(100*a.ci[0]).toFixed(0)+"–"+(100*a.ci[1]).toFixed(0)+"]":"—")+"</td><td>"+(a.nd?(a.net>=0?"+":"")+a.net.toFixed(3)+"%":"—")+"</td></tr>"}
   h+="</table>";const a=pvStats(PV.filter(r=>r.ver===cur));let vd;
   if(a.nd<200)vd="Campione troppo piccolo ("+a.nd+" direzionali con queste regole, ne servono almeno 200): nessuna conclusione. Il caso puro azzecca circa il "+(100*a.base).toFixed(0)+"% (la direzione più frequente nel campione).";
