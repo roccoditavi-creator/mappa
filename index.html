@@ -26,7 +26,7 @@ body{display:flex;flex-direction:column}#c{touch-action:none;display:block;width
 .rw{display:flex;gap:10px;align-items:center;margin:10px 0 4px}.box small{color:var(--mut)}
 @media(max-width:640px){#top h1{display:none}}
 #pp{width:340px;max-height:calc(100vh - 110px);overflow:auto}#pp textarea{width:100%;box-sizing:border-box;background:#12171c;color:var(--fg);border:1px solid var(--ln);border-radius:6px;font:11px ui-monospace,Consolas,monospace;margin-top:6px}#pp table{width:100%;border-collapse:collapse;margin:6px 0;font-size:11px}#pp td,#pp th{padding:2px 3px;text-align:right;border-bottom:1px solid var(--ln)}#pp td:first-child,#pp th:first-child{text-align:left}#pp .vd{margin:6px 0;padding:6px 8px;border-radius:6px;background:#12171c;line-height:1.4}</style></head><body>
-<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v40</small></h1><span class="t" id="tit"></span>
+<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v41</small></h1><span class="t" id="tit"></span>
 <button id="bCa" class="on">Candele</button><select id="sTf"><option value="15000">15 s</option><option value="60000" selected>1 min</option><option value="300000">5 min</option><option value="900000">15 min</option><option value="1800000">30 min</option><option value="3600000">1 ora</option></select>
 <button id="bNe" class="on">Sfondo nero</button><button id="bCo" title="Intensità e contrasto della mappa di calore">Colori ▾</button><button id="bZn" class="on" title="Aree dense di liquidità (bande da 10 $ con molto volume nel libro, che durano almeno 30 s)">Aree</button><button id="bSn" class="on" title="Allarmi sonori: liquidazioni grosse, prezzo vicino ad aree dense, sweep enormi, feed fermo">Suoni ▾</button><button id="bLq" class="on" title="Liquidazioni reali (Bybit, OKX, Binance): rombo rosso = long liquidato, verde = short liquidato">Liq.</button><button id="bSt" class="on" title="Linee dei livelli dove probabilmente stanno gli stop (massimi/minimi recenti e numeri tondi): è un'inferenza">Stop?</button><button id="bSg" class="on" title="Segnali: assorbimento, iceberg, muro ritirato, layering, sweep, tocco di livello">Segnali</button><button id="bRm" title="Dimensione minima del muro ritirato (R) mostrato: clic = cambia (10/15/20/30/50 BTC)">R ≥ 20</button><button id="bBo" class="on">Bolle</button><button id="bB1" title="Bolle più piccole (le bolle si raggruppano per timeframe e passo prezzo)">Bolle −</button><button id="bB2" title="Bolle più grandi">Bolle +</button><button id="bVo" class="on">Volume</button>
 <button id="bPv" class="on" title="Previsioni direzionali (freccia verde su, rossa giù, grigia neutra) con verifica automatica dopo l'orizzonte scelto">Previsioni ▾</button><button id="bYm" title="Scala prezzo: Auto = si adatta ai dati visibili; Fisso = altezza fissa centrata sul prezzo; Libero = la sposti tu">Prezzo: Fisso</button><button id="bY1" title="Riduci altezza (più zoom sul prezzo)">Altezza −</button><button id="bY2" title="Aumenta altezza (meno zoom sul prezzo)">Altezza +</button>
@@ -439,7 +439,7 @@ let ws=null,bids=new Map(),asks=new Map(),timer=null;
 let pingT=null;const FE={krf:"Kraken Futures PF_XBTUSD perp (libro completo)",kr:"Kraken BTC/USD spot (libro 100 livelli)",okp:"OKX BTC-USDT-SWAP perp (libro 400 livelli, contratti da 0.01 BTC)",okx:"OKX X-Perp BTC-USD_UM_XPERP-310404 (contratti da 0.0001 BTC)",oks:"OKX BTC-USDT spot (libro 400 livelli)"};
 function addTrade(t){TR.push(t);CV.push((CV.length?CV[CV.length-1]:0)+t[3]*t[2]);const b=Math.floor(t[1]);let o=svp.get(b);if(!o){o={b:0,s:0};svp.set(b,o)}t[3]>0?o.b+=t[2]:o.s+=t[2]}
 // ---- allarmi sonori (solo in Live)
-let AC=null,lastSnd=0,lastKey={},lastTick=0,SWH=[],swThr=0;
+let AC=null,lastSnd=0,lastKey={},lastTick=0,lastData=0,rcN=0,rcT=null,SWH=[],swThr=0;
 function audio(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state==="suspended")AC.resume();return AC}
 addEventListener("pointerdown",audio);addEventListener("keydown",audio);
 const AL={liq:{seq:[[660,.12],[880,.2]],type:"sine",vol:.2},area:{seq:[[523,.1],[659,.1],[784,.18]],type:"triangle",vol:.22},fine:{seq:[[784,.12],[523,.22]],type:"triangle",vol:.22},sweep:{seq:[[220,.4]],type:"sawtooth",vol:.1},tec:{seq:[[880,.18],[440,.18],[880,.18],[440,.18]],type:"square",vol:.1}};
@@ -455,7 +455,9 @@ function alarmTick(mid,now){lastTick=now;
   let bv=0,sv=0;for(let j=TR.length-1;j>=0&&TR[j][0]>=now-3000;j--){TR[j][3]>0?bv+=TR[j][2]:sv+=TR[j][2]}const mx=Math.max(bv,sv);SWH.push(mx);if(SWH.length>3600)SWH.shift();
   if(SWH.length>=300&&SWH.length%20===0){const a=SWH.slice().sort((x,y)=>x-y);swThr=a[Math.floor(a.length*.995)]}
   const thr=Math.max(opt.swMin,SWH.length>=300?swThr:opt.swMin*6);if(mx>=thr)alarm("sweep","Sweep enorme: "+(bv>sv?"acquisti ":"vendite ")+mx.toFixed(1)+" BTC in 3 s (soglia "+thr.toFixed(1)+")","sw"+(bv>sv?"b":"s"),20000)}
-setInterval(()=>{if(live&&lastTick&&(Date.now()-lastTick>10000||(ws&&ws.readyState>1)))alarm("tec","FEED FERMO: nessun dato da "+Math.round((Date.now()-lastTick)/1000)+" s — controlla la connessione","tec",60000)},2000);
+setInterval(()=>{if(!live||!lastData)return;const n=Date.now(),g=n-lastData,hid=document.hidden;
+  if(g>20000)alarm("tec","FEED FERMO: nessun dato dal server da "+Math.round(g/1000)+" s"+(ws&&ws.readyState>1?" (connessione chiusa, riprovo)":"")+(hid?" — la pagina è in secondo piano e il browser la rallenta":""),"tec",60000);
+  else if(lastTick&&n-lastTick>5000)alarm("tec","Scheda in secondo piano o computer in risparmio energetico: il browser rallenta la mappa e si perdono campioni. Tienila visibile in una finestra sua.","tec2",300000)},2000);
 // ---- liquidazioni reali (feed pubblici Bybit, OKX, Binance): long liquidato = vendita forzata
 function lqAdd(t,p,q,v,lg){if(!(q>0)||!(p>0))return;LQ.push({t,p,q,v,lg});if(LQ.length>3000)LQ.shift();dirty=true;lqAlarm(t,p,q,v,lg)}
 function lqStop(){for(const w of wsl){try{w.onmessage=null;w.onclose=null;w.close()}catch(e){}}wsl=[]}
@@ -483,7 +485,7 @@ async function resumeLive(){try{const db=await idbOpen();const all=await idbDo(d
     $("sFe").value=meta.fe;S=S2;TR=T2;EV=[];const lastS=S[S.length-1];S.push({t:lastS.t+1,mid:lastS.mid,c:[],gap:true});savedT=lastS.t;
     prep();sgAll();$("bL").classList.add("on");$("bL").textContent="Replay";liveStart(true);return true}catch(e){return false}}
 function liveStart(keep){stopWs();lqStart();lastTick=Date.now();SWH=[];
-  if(!keep){S=[];TR=[];CV=[];svp=new Map();sgReset();savedT=0;LQ=[];idbClear()}EV=[];bids.clear();asks.clear();live=true;const fe=$("sFe").value;title="LIVE "+FE[fe];$("tit").textContent=title;clearInterval(pingT);
+  if(!keep){S=[];TR=[];CV=[];svp=new Map();sgReset();savedT=0;LQ=[];idbClear()}EV=[];bids.clear();asks.clear();live=true;lastData=Date.now();const fe=$("sFe").value;title="LIVE "+FE[fe];$("tit").textContent=title;clearInterval(pingT);
   if(fe==="kr"){ws=new WebSocket("wss://ws.kraken.com/v2");
   ws.onopen=()=>{ws.send(JSON.stringify({method:"subscribe",params:{channel:"book",symbol:["BTC/USD"],depth:100}}));ws.send(JSON.stringify({method:"subscribe",params:{channel:"trade",symbol:["BTC/USD"]}}))};
   ws.onmessage=e=>{const m=JSON.parse(e.data);
@@ -504,7 +506,8 @@ function liveStart(keep){stopWs();lqStart();lastTick=Date.now();SWH=[];
         for(const p of d.bids){const px=+p[0],q=+p[1]*mul;q===0?bids.delete(px):bids.set(px,q)}for(const p of d.asks){const px=+p[0],q=+p[1]*mul;q===0?asks.delete(px):asks.set(px,q)}
         if(asks.size&&bids.size){const ba=Math.min(...asks.keys()),bb=Math.max(...bids.keys());for(const k of [...asks.keys()])if(k<=bb)asks.delete(k);for(const k of [...bids.keys()])if(k>=ba)bids.delete(k)}}
       else if(m.arg.channel==="trades"){for(const x of m.data)addTrade([+x.ts,+x.px,+x.sz*mul,x.side==="buy"?1:-1])}}}
-  ws.onclose=()=>{clearInterval(timer);clearInterval(pingT)};
+  {const om=ws.onmessage;ws.onmessage=e=>{lastData=Date.now();rcN=0;om(e)}}
+  ws.onclose=()=>{clearInterval(timer);clearInterval(pingT);const me=ws;if(live)rcT=setTimeout(()=>{if(live&&ws===me){rcN++;toast("Connessione persa: la riprendo (tentativo "+rcN+")");liveStart(true)}},Math.min(2000*(rcN+1),15000))};
   timer=setInterval(()=>{if(!bids.size||!asks.size)return;const bb=Math.max(...bids.keys()),ba=Math.min(...asks.keys()),cells=new Map();
     for(const [p,q] of bids)if(p>=bb-80){const k=Math.floor(p)+"b",o=cells.get(k)||[Math.floor(p),0,0];o[1]+=q;cells.set(k,o)}
     for(const [p,q] of asks)if(p<=ba+80){const k=Math.floor(p)+"a",o=cells.get(k)||[Math.floor(p),0,1];o[1]+=q;cells.set(k,o)}
