@@ -13,6 +13,9 @@ button,select{background:#2b3641;color:var(--fg);border:1px solid var(--ln);bord
 button:hover,select:hover{border-color:var(--acc)}button.on{background:#27506e;border-color:var(--acc)}
 body{display:flex;flex-direction:column}#c{touch-action:none;display:block;width:100%;flex:1 1 0;min-height:0;cursor:crosshair}
 #hp{position:fixed;top:46px;right:10px;z-index:8;background:var(--panel);border:1px solid var(--ln);border-radius:10px;padding:10px 12px;width:270px;box-shadow:0 6px 24px #000a}#hp[hidden]{display:none}#hp label{display:block;color:var(--mut);font-size:12px;margin:8px 0 2px}#hp input{width:100%}#hp canvas{display:block;width:100%;height:14px;margin:6px 0;border-radius:3px}
+#hq{position:fixed;left:8px;bottom:34px;z-index:7;width:28px;height:28px;border-radius:50%;padding:0;font-weight:700;font-size:15px;line-height:26px;text-align:center;background:#27506e;border:1px solid var(--acc)}
+#hl{position:fixed;left:8px;bottom:68px;z-index:7;width:min(460px,calc(100vw - 16px));max-height:calc(100vh - 130px);overflow:auto;background:var(--panel);border:1px solid var(--ln);border-radius:10px;padding:10px 12px;box-shadow:0 6px 24px #000a;font-size:12px}#hl[hidden]{display:none}
+#hl h4{margin:10px 0 4px;color:var(--acc);font-size:12px;letter-spacing:.04em;text-transform:uppercase}#hl h4:first-child{margin-top:0}#hl .r{display:flex;gap:8px;align-items:flex-start;margin:3px 0}#hl .k{flex:none;min-width:26px;height:20px;border-radius:10px;background:#0b0f14;border:1.5px solid var(--buy);color:var(--buy);text-align:center;font-weight:700;line-height:17px;padding:0 4px}#hl .k.s{border-color:var(--sell);color:var(--sell)}#hl .k.n{border-color:var(--ln);color:var(--fg)}#hl small{color:var(--mut)}
 #tip{position:fixed;pointer-events:none;background:#12171cee;border:1px solid var(--ln);border-radius:6px;padding:6px 8px;font-size:12px;display:none;white-space:pre;z-index:5}
 #cp{position:fixed;inset:0;background:#000a;z-index:9;display:flex;align-items:flex-end;justify-content:center}#cp[hidden]{display:none}
 .box{background:var(--panel);border:1px solid var(--ln);border-radius:12px 12px 0 0;padding:12px;width:min(720px,100%);max-height:92%;overflow:auto}
@@ -21,7 +24,7 @@ body{display:flex;flex-direction:column}#c{touch-action:none;display:block;width
 .rw{display:flex;gap:10px;align-items:center;margin:10px 0 4px}.box small{color:var(--mut)}
 @media(max-width:640px){#top h1{display:none}}
 </style></head><body>
-<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v28</small></h1><span class="t" id="tit"></span>
+<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v29</small></h1><span class="t" id="tit"></span>
 <button id="bCa" class="on">Candele</button><select id="sTf"><option value="15000">15 s</option><option value="60000" selected>1 min</option><option value="300000">5 min</option><option value="900000">15 min</option><option value="1800000">30 min</option><option value="3600000">1 ora</option></select>
 <button id="bNe" class="on">Sfondo nero</button><button id="bCo" title="Intensità e contrasto della mappa di calore">Colori ▾</button><button id="bZn" class="on" title="Aree dense di liquidità (bande da 10 $ con molto volume nel libro, che durano almeno 30 s)">Aree</button><button id="bLq" class="on" title="Liquidazioni reali (Bybit, OKX, Binance): rombo rosso = long liquidato, verde = short liquidato">Liq.</button><button id="bSt" class="on" title="Linee dei livelli dove probabilmente stanno gli stop (massimi/minimi recenti e numeri tondi): è un'inferenza">Stop?</button><button id="bSg" class="on" title="Segnali: assorbimento, iceberg, muro ritirato, layering, sweep, tocco di livello">Segnali</button><button id="bRm" title="Dimensione minima del muro ritirato (R) mostrato: clic = cambia (10/15/20/30/50 BTC)">R ≥ 20</button><button id="bBo" class="on">Bolle</button><button id="bB1" title="Bolle più piccole (le bolle si raggruppano per timeframe e passo prezzo)">Bolle −</button><button id="bB2" title="Bolle più grandi">Bolle +</button><button id="bVo" class="on">Volume</button>
 <button id="bYm" title="Scala prezzo: Auto = si adatta ai dati visibili; Fisso = altezza fissa centrata sul prezzo; Libero = la sposti tu">Prezzo: Fisso</button><button id="bY1" title="Riduci altezza (più zoom sul prezzo)">Altezza −</button><button id="bY2" title="Aumenta altezza (meno zoom sul prezzo)">Altezza +</button>
@@ -32,7 +35,7 @@ body{display:flex;flex-direction:column}#c{touch-action:none;display:block;width
 <label>Contrasto <span id="vc"></span></label><input type="range" id="rc" min="50" max="300" step="5">
 <label>Sensibilità (verso destra: anche i livelli piccoli si accendono) <span id="vs"></span></label><input type="range" id="rs" min="25" max="400" step="5">
 <div class="rw"><button id="hr">Ripristina</button><button id="hx">Chiudi</button></div></div>
-<canvas id="c"></canvas><div id="tip"></div>
+<canvas id="c"></canvas><div id="tip"></div><button id="hq" title="Legenda: significato di lettere e simboli">?</button><div id="hl" hidden></div>
 <div id="cp" hidden><div class="box"><div class="hd"><b>Copia per Claude</b><button id="cpX">Chiudi</button></div>
 <label>La tua lettura (cosa vedi e cosa pensi)</label><textarea id="cpN" rows="4" placeholder="es. muro grosso sull'ask, poco volume sotto, secondo me spinge giù; vorrei capire se regge"></textarea>
 <label>Testo pronto da incollare nella chat (dati della finestra visibile)</label><textarea id="cpT" rows="9" readonly></textarea>
@@ -258,6 +261,35 @@ function up(e){if(pd_){pd_=null;saveOpt();ptr.delete(e.pointerId);return}if(ax){
 cv.addEventListener("pointerup",up);cv.addEventListener("pointercancel",up);
 cv.addEventListener("dblclick",()=>{fit();draw()});
 cv.addEventListener("pointerleave",e=>{if(e.pointerType==="mouse"){cross=null;tip.style.display="none";draw()}});
+// ---- legenda lettere e simboli
+(function(){const R=(k,cl,t,d)=>'<div class="r"><span class="k '+cl+'">'+k+'</span><span><b>'+t+'</b><br><small>'+d+'</small></span></div>';
+  $("hl").innerHTML='<b>Legenda</b> <small>— clic su ? per chiudere</small>'+
+  '<h4>Segnali (cerchio con lettera)</h4>'+
+  R("A","","Assorbimento (H1)","Molti acquisti o vendite aggressivi (delta 30 s ≥ 2,95 BTC) ma il prezzo non avanza. Direzione attesa: contro l\'aggressore.")+
+  R("I","","Iceberg forte (H2)","Su un prezzo si esegue ≥ 3× la quantità mostrata, con ≥ 3 ricariche. Il livello tiene.")+
+  R("J","","Possibile iceberg","Come I ma più sensibile: eseguito ≥ 2× il mostrato, ≥ 2 ricariche, ≥ 1 BTC. Compare subito; diventa I se supera le regole forti.")+
+  R("T","","Tocco di livello con muro (H3)","Prezzo vicino a un livello (tondo da 500 $, max/min 15 o 60 min) con un muro ≥ 10 BTC entro 3 $. Attesa: rimbalzo.")+
+  R("R","s","Muro ritirato vicino (H4)","Un muro grosso sparisce senza essere mangiato, entro 10 $ dal prezzo. Attesa: il prezzo va dove il muro bloccava. Filtro dimensione nel tasto R ≥.")+
+  R("L","","Layering ristretto (H5)","≥ 3 livelli grossi entro 30 $ (≥ 40 BTC) che spariscono senza esecuzione. Attesa come per R.")+
+  R("S","","Sweep (H6)","Serie di trade aggressivi nello stesso verso che spazzano ≥ 5 prezzi e ≥ 5 BTC. Attesa: ritorno nel verso opposto.")+
+  R("X","","Stop run provvisorio","Rottura di un max/min a 15 o 60 min e rientro entro 60 s. Definizione mia, non firmata né testata. Attesa: verso opposto alla rottura.")+
+  '<h4>Come leggere i marker</h4>'+
+  R("▲","","Freccia sopra/sotto","▲ verde = direzione attesa SU; ▼ rossa = GIÙ. È l\'attesa dell\'ipotesi, non una previsione.")+
+  R("◯","n","Anello spesso","Candidato: punteggio parziale ≥ 4 su 6 (confluenza, vicinanza a un livello, squilibrio del libro). Mancano due componenti del v35.")+
+  '<small>Passa il mouse sul marker per vedere punteggio e dettagli. Sono approssimazioni su celle da 1 $: il registro ufficiale è sul VPS. Un segnale non è un edge statistico.</small>'+
+  '<h4>Liquidazioni, stop, aree</h4>'+
+  R("◆","s","Rombo rosso: long liquidato","Vendita forzata (feed reali Bybit, OKX, Binance). Il numero è in BTC.")+
+  R("◆","","Rombo verde: short liquidato","Acquisto forzato. Non sono tutte le liquidazioni del mercato.")+
+  R("- -","n","Linee \"stop?\"","Massimi/minimi 15 e 60 min e numeri tondi dove di solito stanno gli stop. Arancione sopra, azzurro sotto. È un\'inferenza, non un dato.")+
+  R("Σ","n","Aree (bande)","Bande da 10 $ con molta liquidità (≥ max(30 BTC, 5× mediana), ≥ 30 s). Rosso = ask, verde = bid. Bordo pieno = ancora attiva; tratteggiato = finita (ritirata o attraversata).")+
+  '<h4>Resto del grafico</h4>'+
+  R("●","n","Bolle","Trade aggressivi raggruppati per candela e per passo prezzo: verde = acquisto, rosso = vendita. Il numero è in BTC.")+
+  R("▮","n","Candele e volume","Candele del timeframe scelto; in basso volume acquisti (verde) e vendite (rosso).")+
+  R("CVD","n","CVD","Somma cumulata di acquisti − vendite aggressivi. Se sale mentre il prezzo scende, può essere assorbimento.")+
+  R("LIBRO","n","Colonna del libro","Quantità per livello (al cursore o all\'ultimo istante); arancione = ask, verde = bid. A destra il profilo del volume (POC in giallo).")+
+  R("🔥","n","Mappa di calore","Liquidità nel libro nel tempo; più chiaro/giallo = più grosso. I colori sono relativi alla liquidità tipica del momento.")+
+  '<h4>Tasti utili</h4><small>Ricentra (C) torna al prezzo · Passo −/+ ([ ]) cambia la granularità · Altezza −/+ ( + − ) zoom del prezzo · R ≥ cambia il filtro dei muri ritirati · Copia per Claude prepara il testo da incollare in chat.</small>';
+  $("hq").onclick=()=>{$("hl").hidden=!$("hl").hidden}})();
 // ---- pulsanti
 function sync(){rmSet();$("bCa").classList.toggle("on",opt.candele);$("bBo").classList.toggle("on",opt.bolle);$("bSg").classList.toggle("on",opt.segn);$("bZn").classList.toggle("on",opt.zone);$("bLq").classList.toggle("on",opt.liq);$("bSt").classList.toggle("on",opt.stp);$("bNe").classList.toggle("on",opt.nero);$("bVo").classList.toggle("on",opt.volume);$("sTf").value=String(opt.tf)}
 $("bCa").onclick=()=>{opt.candele=!opt.candele;saveOpt();sync();dirty=true;draw()};
