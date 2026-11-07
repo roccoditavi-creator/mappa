@@ -26,7 +26,7 @@ body{display:flex;flex-direction:column}#c{touch-action:none;display:block;width
 .rw{display:flex;gap:10px;align-items:center;margin:10px 0 4px}.box small{color:var(--mut)}
 @media(max-width:640px){#top h1{display:none}}
 #pp{width:340px;max-height:calc(100vh - 110px);overflow:auto}#pp textarea{width:100%;box-sizing:border-box;background:#12171c;color:var(--fg);border:1px solid var(--ln);border-radius:6px;font:11px ui-monospace,Consolas,monospace;margin-top:6px}#pp table{width:100%;border-collapse:collapse;margin:6px 0;font-size:11px}#pp td,#pp th{padding:2px 3px;text-align:right;border-bottom:1px solid var(--ln)}#pp td:first-child,#pp th:first-child{text-align:left}#pp .vd{margin:6px 0;padding:6px 8px;border-radius:6px;background:#12171c;line-height:1.4}</style></head><body>
-<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v41</small></h1><span class="t" id="tit"></span>
+<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v42</small></h1><span class="t" id="tit"></span>
 <button id="bCa" class="on">Candele</button><select id="sTf"><option value="15000">15 s</option><option value="60000" selected>1 min</option><option value="300000">5 min</option><option value="900000">15 min</option><option value="1800000">30 min</option><option value="3600000">1 ora</option></select>
 <button id="bNe" class="on">Sfondo nero</button><button id="bCo" title="Intensità e contrasto della mappa di calore">Colori ▾</button><button id="bZn" class="on" title="Aree dense di liquidità (bande da 10 $ con molto volume nel libro, che durano almeno 30 s)">Aree</button><button id="bSn" class="on" title="Allarmi sonori: liquidazioni grosse, prezzo vicino ad aree dense, sweep enormi, feed fermo">Suoni ▾</button><button id="bLq" class="on" title="Liquidazioni reali (Bybit, OKX, Binance): rombo rosso = long liquidato, verde = short liquidato">Liq.</button><button id="bSt" class="on" title="Linee dei livelli dove probabilmente stanno gli stop (massimi/minimi recenti e numeri tondi): è un'inferenza">Stop?</button><button id="bSg" class="on" title="Segnali: assorbimento, iceberg, muro ritirato, layering, sweep, tocco di livello">Segnali</button><button id="bRm" title="Dimensione minima del muro ritirato (R) mostrato: clic = cambia (10/15/20/30/50 BTC)">R ≥ 20</button><button id="bBo" class="on">Bolle</button><button id="bB1" title="Bolle più piccole (le bolle si raggruppano per timeframe e passo prezzo)">Bolle −</button><button id="bB2" title="Bolle più grandi">Bolle +</button><button id="bVo" class="on">Volume</button>
 <button id="bPv" class="on" title="Previsioni direzionali (freccia verde su, rossa giù, grigia neutra) con verifica automatica dopo l'orizzonte scelto">Previsioni ▾</button><button id="bYm" title="Scala prezzo: Auto = si adatta ai dati visibili; Fisso = altezza fissa centrata sul prezzo; Libero = la sposti tu">Prezzo: Fisso</button><button id="bY1" title="Riduci altezza (più zoom sul prezzo)">Altezza −</button><button id="bY2" title="Aumenta altezza (meno zoom sul prezzo)">Altezza +</button>
@@ -260,6 +260,8 @@ function showTip(x,y,cxp,cyp){
   for(const o of evHit){if(o.lq&&Math.hypot(o.x-x,o.y-y)<=o.r+2){const q=o.lq;txt+="\n— LIQUIDAZIONE "+q.v+": "+(q.lg?"LONG liquidato (vendita forzata)":"SHORT liquidato (acquisto forzato)")+"\n  "+q.q.toFixed(3)+" BTC @ "+q.p.toFixed(1)+" ≈ "+Math.round(q.q*q.p).toLocaleString("it-IT")+" $ alle "+fmtT(q.t,true);break}
     if(o.pv&&Math.hypot(o.x-x,o.y-y)<=o.r+2){txt+="\n"+pvText(o.pv);break}
     if(o.e&&Math.hypot(o.x-x,o.y-y)<=o.r+2){const e=o.e;txt+="\n— SEGNALE "+e.kind+": "+KIND[e.kind]+"\n  attesa: "+(e.dir>0?"SU":"GIÙ")+" | "+(e.kind==="X"?"volume oltre il livello ":"dimensione ")+e.size.toFixed(2)+" BTC"+(e.conMuro!==undefined?" | con muro: "+(e.conMuro?"sì":"no"):"")+(e.liv?" | livello: "+e.liv:"")+"\n  punteggio parziale "+e.score+"/6 (confluenza "+e.parts.confluenza+", livello "+e.parts.livello+", libro "+e.parts.libro+")"+(e.cand?" — CANDIDATO":"")+"\n  (approssimato sulla mappa; il registro ufficiale è sul VPS)";break}}
+  if(opt.zone&&SG){for(const z of znAll()){if(t<z.t0||(z.t1!==null&&t>z.t1)||p<z.b*ZB||p>(z.b+1)*ZB)continue;const ar=AX.get(z.side+"|"+z.b+"|"+z.t0);
+    txt+="\n— AREA DENSA "+(z.side==="ask"?"ASK (vendite in attesa)":"BID (acquisti in attesa)")+" "+z.b*ZB+"–"+(z.b*ZB+ZB)+" $\n  massimo "+z.max.toFixed(0)+" BTC | "+(z.t1===null?"ATTIVA da "+Math.round((Date.now()-z.t0)/1000)+" s":"durata "+Math.round((z.t1-z.t0)/1000)+" s, esito: "+z.esito)+(ar&&ar.r5!==null?"\n  reazione a 5 min "+(ar.r5>=0?"+":"")+ar.r5.toFixed(3)+"% (positivo = prezzo si allontana)":"");break}}
   for(const o of hit){if(Math.hypot(o.x-x,o.y-y)<=Math.max(o.r,12)){txt+="\n— bolla: "+o.c.q.toFixed(3)+" BTC, "+(o.c.s>0?"acquisto":"vendita")+" aggressiva, "+o.c.n+" trade";break}}
   tip.textContent=txt;tip.style.display="block";tip.style.left=Math.max(4,Math.min(cxp+14,innerWidth-250))+"px";tip.style.top=Math.max(48,Math.min(cyp+14,innerHeight-110))+"px"}
 let ax=null,pd_=null;const presX=()=>S.length?tx(S[S.length-1].t):-99;
@@ -296,6 +298,12 @@ cv.addEventListener("pointerleave",e=>{if(e.pointerType==="mouse"){cross=null;ti
   R("L","","Layering ristretto (H5)","≥ 3 livelli grossi entro 30 $ (≥ 40 BTC) che spariscono senza esecuzione. Attesa come per R.")+
   R("S","","Sweep (H6)","Serie di trade aggressivi nello stesso verso che spazzano ≥ 5 prezzi e ≥ 5 BTC. Attesa: ritorno nel verso opposto.")+
   R("X","","Stop run provvisorio","Rottura di un max/min a 15 o 60 min e rientro entro 60 s. Definizione mia, non firmata né testata. Attesa: verso opposto alla rottura.")+
+  '<small>Vale per tutte le lettere: sono ipotesi sul comportamento del libro, non un vantaggio dimostrato. Il cerchio verde/rosso indica la direzione attesa (SU/GIÙ).</small>'+
+  '<h4>Ingredienti della previsione (non compaiono sul grafico)</h4>'+
+  R("flow","n","Flusso (CVD)","Acquisti − vendite aggressivi degli ultimi 5 min, rapportati al volume. Peso 1.")+
+  R("book","n","Squilibrio del libro","Bid contro ask entro ±30 $ dal prezzo. Peso 1.")+
+  R("A I S X","n","Segnali A, I, S, X","Direzione netta degli ultimi 5 min (A, I, S, X peso 1; J, R, L, T peso 0,5).")+
+  R("liq","n","Liquidazioni","Registrate ma con peso 0 nelle regole iniziali. Previsione solo se |punteggio| ≥ 1.")+
   '<h4>Come leggere i marker</h4>'+
   R("▲","","Freccia sopra/sotto","▲ verde = direzione attesa SU; ▼ rossa = GIÙ. È l\'attesa dell\'ipotesi, non una previsione.")+
   R("◯","n","Anello spesso","Candidato: punteggio parziale ≥ 4 su 6 (confluenza, vicinanza a un livello, squilibrio del libro). Mancano due componenti del v35.")+
@@ -308,10 +316,12 @@ cv.addEventListener("pointerleave",e=>{if(e.pointerType==="mouse"){cross=null;ti
   '<h4>Previsioni (tasto Previsioni)</h4>'+
   R("▲","","Freccia verde in alto","Previsione: prezzo più alto tra N minuti oltre il costo. Piena = verificata, trasparente = in attesa. Dopo l\'orizzonte compare ✓/✗ e il movimento reale.")+
   R("▼","s","Freccia rossa in basso","Previsione: prezzo più basso tra N minuti.")+
-  R("◆","n","Rombo grigio","Neutra: nessuna indicazione abbastanza forte. Vale ✓ se il prezzo si è mosso meno del costo.")+
+  R("✓/✗","n","Esito a più orizzonti","5 min (ufficiale) più 15 e 30 min come confronto. Il passaggio con il mouse mostra il PERCHÉ, l\'esito e il netto dei costi (0,10 %).")+
+    R("◆","n","Rombo grigio","Neutra: nessuna indicazione abbastanza forte. Vale ✓ se il prezzo si è mosso meno del costo.")+
   '<small>Le regole iniziali sono ipotesi non provate. Il pannello mostra quanto spesso ci azzecca contro il caso e contro i costi.</small>'+
+  R("Σ","n","Esito delle aree","Ritirata = la liquidità sparisce prima del contatto; attraversata = il prezzo arriva alla banda. Le aree sono registrate (Scarica aree CSV) con la reazione del prezzo a 5 e 15 min.")+
   '<h4>Allarmi sonori (tasto Suoni)</h4>'+
-  R("♪","","Liquidazione grossa","Singola ≥ soglia o raffica in 30 s.")+R("♪","","Prezzo vicino ad area densa / area finita","Una volta per area.")+R("♪","s","Sweep enorme","Trade aggressivi in 3 s sopra il 99,5° percentile della sessione e sopra il minimo scelto.")+R("♪","s","Feed fermo","Nessun dato da più di 10 s: le letture non sono affidabili.")+
+  R("♪","","Liquidazione grossa","Singola ≥ soglia o raffica in 30 s.")+R("♪","","Prezzo vicino ad area densa / area finita","Una volta per area.")+R("♪","s","Sweep enorme","Trade aggressivi in 3 s sopra il 99,5° percentile della sessione e sopra il minimo scelto.")+R("♪","s","Feed fermo","Nessun dato dal server da più di 20 s: le letture non sono affidabili. La mappa riprova da sola la connessione.")+R("♪","n","Scheda in secondo piano","Il browser rallenta la pagina e si perdono campioni: tienila visibile in una finestra sua.")+
   '<h4>Resto del grafico</h4>'+
   R("●","n","Bolle","Trade aggressivi raggruppati per candela e per passo prezzo: verde = acquisto, rosso = vendita. Il numero è in BTC.")+
   R("▮","n","Candele e volume","Candele del timeframe scelto; in basso volume acquisti (verde) e vendite (rosso).")+
