@@ -18,7 +18,7 @@ body{display:flex;flex-direction:column}#c{touch-action:none;display:block;width
 #hl h4{margin:10px 0 4px;color:var(--acc);font-size:12px;letter-spacing:.04em;text-transform:uppercase}#hl h4:first-child{margin-top:0}#hl .r{display:flex;gap:8px;align-items:flex-start;margin:3px 0}#hl .k{flex:none;min-width:26px;height:20px;border-radius:10px;background:#0b0f14;border:1.5px solid var(--buy);color:var(--buy);text-align:center;font-weight:700;line-height:17px;padding:0 4px}#hl .k.s{border-color:var(--sell);color:var(--sell)}#hl .k.n{border-color:var(--ln);color:var(--fg)}#hl small{color:var(--mut)}
 #sp,#pp{position:fixed;top:96px;right:10px;z-index:8;background:var(--panel);border:1px solid var(--ln);border-radius:10px;padding:10px 12px;width:290px;box-shadow:0 6px 24px #000a;font-size:12px}#sp[hidden],#pp[hidden]{display:none}#sp label,#pp label{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:6px 0;color:var(--mut)}#sp input[type=number],#pp input[type=number],#pp select{width:70px;background:#12171c;color:var(--fg);border:1px solid var(--ln);border-radius:6px;padding:3px 5px}#sp .rw,#pp .rw{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 #toast{position:fixed;top:100px;left:50%;transform:translateX(-50%);z-index:9;display:flex;flex-direction:column;gap:6px;pointer-events:none;align-items:center}#toast div{max-width:min(600px,92vw);background:#12171cee;border:1px solid var(--acc);border-radius:8px;padding:6px 12px;font-size:13px;box-shadow:0 4px 16px #000a}#toast .tec{border-color:var(--sell);color:#ffb3ae}
-#tip{position:fixed;pointer-events:none;background:#12171cee;border:1px solid var(--ln);border-radius:6px;padding:6px 8px;font-size:12px;display:none;white-space:pre;z-index:5}
+#tip{position:fixed;pointer-events:none;background:#12171cee;border:1px solid var(--ln);border-radius:6px;padding:6px 8px;font-size:12px;display:none;white-space:pre-wrap;max-width:min(420px,92vw);z-index:5}
 #cp{position:fixed;inset:0;background:#000a;z-index:9;display:flex;align-items:flex-end;justify-content:center}#cp[hidden]{display:none}
 .box{background:var(--panel);border:1px solid var(--ln);border-radius:12px 12px 0 0;padding:12px;width:min(720px,100%);max-height:92%;overflow:auto}
 .hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.box label{display:block;color:var(--mut);font-size:12px;margin:8px 0 4px}
@@ -26,7 +26,7 @@ body{display:flex;flex-direction:column}#c{touch-action:none;display:block;width
 .rw{display:flex;gap:10px;align-items:center;margin:10px 0 4px}.box small{color:var(--mut)}
 @media(max-width:640px){#top h1{display:none}}
 #pp{width:340px;max-height:calc(100vh - 110px);overflow:auto}#pp textarea{width:100%;box-sizing:border-box;background:#12171c;color:var(--fg);border:1px solid var(--ln);border-radius:6px;font:11px ui-monospace,Consolas,monospace;margin-top:6px}#pp table{width:100%;border-collapse:collapse;margin:6px 0;font-size:11px}#pp td,#pp th{padding:2px 3px;text-align:right;border-bottom:1px solid var(--ln)}#pp td:first-child,#pp th:first-child{text-align:left}#pp .vd{margin:6px 0;padding:6px 8px;border-radius:6px;background:#12171c;line-height:1.4}</style></head><body>
-<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v42</small></h1><span class="t" id="tit"></span>
+<div id="top"><h1>Mappa liquidità <small style="font-weight:400;color:var(--mut)">v43</small></h1><span class="t" id="tit"></span>
 <button id="bCa" class="on">Candele</button><select id="sTf"><option value="15000">15 s</option><option value="60000" selected>1 min</option><option value="300000">5 min</option><option value="900000">15 min</option><option value="1800000">30 min</option><option value="3600000">1 ora</option></select>
 <button id="bNe" class="on">Sfondo nero</button><button id="bCo" title="Intensità e contrasto della mappa di calore">Colori ▾</button><button id="bZn" class="on" title="Aree dense di liquidità (bande da 10 $ con molto volume nel libro, che durano almeno 30 s)">Aree</button><button id="bSn" class="on" title="Allarmi sonori: liquidazioni grosse, prezzo vicino ad aree dense, sweep enormi, feed fermo">Suoni ▾</button><button id="bLq" class="on" title="Liquidazioni reali (Bybit, OKX, Binance): rombo rosso = long liquidato, verde = short liquidato">Liq.</button><button id="bSt" class="on" title="Linee dei livelli dove probabilmente stanno gli stop (massimi/minimi recenti e numeri tondi): è un'inferenza">Stop?</button><button id="bSg" class="on" title="Segnali: assorbimento, iceberg, muro ritirato, layering, sweep, tocco di livello">Segnali</button><button id="bRm" title="Dimensione minima del muro ritirato (R) mostrato: clic = cambia (10/15/20/30/50 BTC)">R ≥ 20</button><button id="bBo" class="on">Bolle</button><button id="bB1" title="Bolle più piccole (le bolle si raggruppano per timeframe e passo prezzo)">Bolle −</button><button id="bB2" title="Bolle più grandi">Bolle +</button><button id="bVo" class="on">Volume</button>
 <button id="bPv" class="on" title="Previsioni direzionali (freccia verde su, rossa giù, grigia neutra) con verifica automatica dopo l'orizzonte scelto">Previsioni ▾</button><button id="bYm" title="Scala prezzo: Auto = si adatta ai dati visibili; Fisso = altezza fissa centrata sul prezzo; Libero = la sposti tu">Prezzo: Fisso</button><button id="bY1" title="Riduci altezza (più zoom sul prezzo)">Altezza −</button><button id="bY2" title="Aumenta altezza (meno zoom sul prezzo)">Altezza +</button>
@@ -173,6 +173,8 @@ function renderBase(){
     for(const r of PV){const X=tx(r.t),Y=py(r.p);if(X<-30||X>w+60||Y<-60||Y>h+60)continue;const col=r.dir>0?"#2ee66b":r.dir<0?"#ff5a52":"#9aa5b1",sg=r.dir>0?-1:1,res=r.res;
       x.strokeStyle=col;x.fillStyle=col;x.lineWidth=2;
       if(r.dir!==0){x.beginPath();x.moveTo(X,Y);x.lineTo(X,Y+sg*14);x.stroke();const b=Y+sg*14,tp=Y+sg*38;x.beginPath();x.moveTo(X,tp);x.lineTo(X-12,b);x.lineTo(X+12,b);x.closePath();if(res&&!res.void)x.fill();else{x.fillStyle=col+"44";x.fill();x.stroke()}
+        {const s=pvStr(r);if(s.fr){x.save();x.setLineDash([3,2]);x.strokeStyle="#fff";x.lineWidth=1.5;x.beginPath();x.moveTo(X,tp);x.lineTo(X-12,b);x.lineTo(X+12,b);x.closePath();x.stroke();x.restore()}
+          x.save();x.fillStyle=(res&&!res.void)?"#10161c":"#fff";x.font="bold 11px system-ui";x.textAlign="center";x.fillText(s.a+(s.c?"!":""),X,sg>0?b+17:b-9);x.restore()}
         evHit.push({x:X,y:(b+tp)/2,r:14,pv:r})}
       else{x.beginPath();x.moveTo(X,Y-6);x.lineTo(X+6,Y);x.lineTo(X,Y+6);x.lineTo(X-6,Y);x.closePath();if(res&&!res.void)x.fill();else x.stroke();evHit.push({x:X,y:Y,r:10,pv:r})}
       if(res&&!res.void){x.fillStyle="#e6edf5";const yy=r.dir>0?Y-46:r.dir<0?Y+54:Y-12;x.fillText((res.ok?"✓ ":"✗ ")+(res.ret>=0?"+":"")+res.ret.toFixed(2)+"%",X,yy)}}
@@ -258,7 +260,7 @@ function showTip(x,y,cxp,cyp){
   cross={x,y};draw();const t=xt(x),p=yp(y);let txt=fmtT(t,true)+" UTC\nprezzo "+p.toFixed(1);
   const si=Math.max(0,lb(S,t,s=>s.t)-1);if(S[si]){const bn=Math.floor(p),c=S[si].c.find(k=>k[0]===bn);txt+="\nlibro in questo $: "+(c?c[1].toFixed(2)+" BTC ("+(c[2]?"vendita":"acquisto")+")":"—")}
   for(const o of evHit){if(o.lq&&Math.hypot(o.x-x,o.y-y)<=o.r+2){const q=o.lq;txt+="\n— LIQUIDAZIONE "+q.v+": "+(q.lg?"LONG liquidato (vendita forzata)":"SHORT liquidato (acquisto forzato)")+"\n  "+q.q.toFixed(3)+" BTC @ "+q.p.toFixed(1)+" ≈ "+Math.round(q.q*q.p).toLocaleString("it-IT")+" $ alle "+fmtT(q.t,true);break}
-    if(o.pv&&Math.hypot(o.x-x,o.y-y)<=o.r+2){txt+="\n"+pvText(o.pv);break}
+    if(o.pv&&Math.hypot(o.x-x,o.y-y)<=o.r+2){txt+="\n"+pvShort(o.pv);break}
     if(o.e&&Math.hypot(o.x-x,o.y-y)<=o.r+2){const e=o.e;txt+="\n— SEGNALE "+e.kind+": "+KIND[e.kind]+"\n  attesa: "+(e.dir>0?"SU":"GIÙ")+" | "+(e.kind==="X"?"volume oltre il livello ":"dimensione ")+e.size.toFixed(2)+" BTC"+(e.conMuro!==undefined?" | con muro: "+(e.conMuro?"sì":"no"):"")+(e.liv?" | livello: "+e.liv:"")+"\n  punteggio parziale "+e.score+"/6 (confluenza "+e.parts.confluenza+", livello "+e.parts.livello+", libro "+e.parts.libro+")"+(e.cand?" — CANDIDATO":"")+"\n  (approssimato sulla mappa; il registro ufficiale è sul VPS)";break}}
   if(opt.zone&&SG){for(const z of znAll()){if(t<z.t0||(z.t1!==null&&t>z.t1)||p<z.b*ZB||p>(z.b+1)*ZB)continue;const ar=AX.get(z.side+"|"+z.b+"|"+z.t0);
     txt+="\n— AREA DENSA "+(z.side==="ask"?"ASK (vendite in attesa)":"BID (acquisti in attesa)")+" "+z.b*ZB+"–"+(z.b*ZB+ZB)+" $\n  massimo "+z.max.toFixed(0)+" BTC | "+(z.t1===null?"ATTIVA da "+Math.round((Date.now()-z.t0)/1000)+" s":"durata "+Math.round((z.t1-z.t0)/1000)+" s, esito: "+z.esito)+(ar&&ar.r5!==null?"\n  reazione a 5 min "+(ar.r5>=0?"+":"")+ar.r5.toFixed(3)+"% (positivo = prezzo si allontana)":"");break}}
@@ -314,7 +316,7 @@ cv.addEventListener("pointerleave",e=>{if(e.pointerType==="mouse"){cross=null;ti
   R("- -","n","Linee \"stop?\"","Massimi/minimi 15 e 60 min e numeri tondi dove di solito stanno gli stop. Arancione sopra, azzurro sotto. È un\'inferenza, non un dato.")+
   R("Σ","n","Aree (bande)","Bande da 10 $ con molta liquidità (≥ max(30 BTC, 5× mediana), ≥ 30 s). Rosso = ask, verde = bid. Bordo pieno = ancora attiva; tratteggiato = finita (ritirata o attraversata).")+
   '<h4>Previsioni (tasto Previsioni)</h4>'+
-  R("▲","","Freccia verde in alto","Previsione: prezzo più alto tra N minuti oltre il costo. Piena = verificata, trasparente = in attesa. Dopo l\'orizzonte compare ✓/✗ e il movimento reale.")+
+  R("▲","","Freccia verde in alto","Previsione: prezzo più alto tra N minuti oltre il costo. Piena = verificata, trasparente = in attesa. Dopo l\'orizzonte compare ✓/✗ e il movimento reale.")+R("4","n","Numero nella freccia","Quanti ingredienti sono d\'accordo con la direzione. 1 = debole, 3 o più = più solida. Un ! dopo il numero (es. 2!) indica almeno un ingrediente contrario. È un aiuto visivo: che la forza conti davvero lo misuriamo sul registro.")+R("△","n","Contorno tratteggiato","Previsione fragile: se togli l\'ingrediente più forte, il punteggio scende sotto la soglia (dipende da uno solo).")+
   R("▼","s","Freccia rossa in basso","Previsione: prezzo più basso tra N minuti.")+
   R("✓/✗","n","Esito a più orizzonti","5 min (ufficiale) più 15 e 30 min come confronto. Il passaggio con il mouse mostra il PERCHÉ, l\'esito e il netto dei costi (0,10 %).")+
     R("◆","n","Rombo grigio","Neutra: nessuna indicazione abbastanza forte. Vale ✓ se il prezzo si è mosso meno del costo.")+
@@ -603,7 +605,7 @@ function pvWhy(r){const P=opt.pvP,up=[],dn=[];if(r.q)return"NEUTRA: mercato trop
   else t+=(up.length&&dn.length?"NEUTRA: gli elementi si contrastano e il totale resta dentro la soglia.":"NEUTRA: i segnali sono troppo deboli, il totale resta dentro la soglia.");return t}
 function pvMake(now){const s=S[S.length-1],P=opt.pvP,f=pvFeat(now,s);let sc=0;for(const k in P.w)sc+=(P.w[k]||0)*(f[k]||0);
   const ctx=pvCtx(now),quiet=P.vmin>0&&ctx.v5<P.vmin;let dir=Math.abs(sc)>=P.th?Math.sign(sc):0;if(quiet)dir=0;
-  PV.push({t:now,p:s.mid,dir,sc:+sc.toFixed(3),f,ver:P.ver,h:opt.pvH,fe:$("sFe").value,res:null,c:ctx,q:quiet?1:0,x:{}});const lr=PV[PV.length-1];lr.why=pvWhy(lr);pvSave();dirty=true;
+  PV.push({t:now,p:s.mid,dir,sc:+sc.toFixed(3),f,ver:P.ver,h:opt.pvH,fe:$("sFe").value,res:null,c:ctx,q:quiet?1:0,x:{}});const lr=PV[PV.length-1];lr.why=pvWhy(lr);if(lr.dir)lr.st=pvStr(lr);pvSave();dirty=true;
   toast("Previsione "+(lr.dir>0?"▲ SU":lr.dir<0?"▼ GIÙ":"◆ NEUTRA")+" a "+lr.h+" min: "+lr.why,"pv")}
 function pvTick(now){if(!live)return;arTick(now);
   let ch=false;for(const r of PV){
@@ -613,6 +615,16 @@ function pvTick(now){if(!live)return;arTick(now);
   if(!opt.pvOn||S.length<120)return;
   const slot=Math.floor(now/(opt.pvH*60000));if(PVslot<0){PVslot=slot;return}
   if(slot!==PVslot){PVslot=slot;pvMake(now);if(!$("pp").hidden)pvPanel()}}
+function pvStr(r){if(r.st)return r.st;const P=opt.pvP;let a=0,c=0,sa=0,mx=0;for(const k in P.w){const v=(P.w[k]||0)*(r.f[k]||0);if(!v||!r.dir)continue;if(v*r.dir>0){a++;const m=Math.abs(v);sa+=m;if(m>mx)mx=m}else c++}return{a,c,fr:a>0&&(a===1||Math.abs(r.sc)-mx<P.th)?1:0}}
+function pvShort(r){const dd=r.dir>0?"SU":r.dir<0?"GIÙ":"NEUTRA",P=opt.pvP,pf=(v,d)=>(v>=0?"+":"−")+Math.abs(v).toFixed(d===undefined?2:d);let t="— PREVISIONE "+dd+" ("+r.h+" min) alle "+fmtT(r.t,true)+" @ "+pvF(r.p,1);
+  if(r.res&&!r.res.void)t+=" — "+(r.res.ok?"ESATTA":"SBAGLIATA")+"\n  "+pvF(r.p,1)+" → "+pvF(r.res.p1,1)+" ("+pf(r.res.ret)+"%)"+(r.res.net!==null?", netto dei costi "+pf(r.res.net)+"%":"");
+  else if(r.res&&r.res.void)t+=" — non verificabile";else t+=" — in attesa";
+  if(r.q)return t+"\n  Mercato troppo fermo: resto neutra.";
+  const pro=[],con=[];for(const k in P.w){const v=(P.w[k]||0)*(r.f[k]||0);if(!v)continue;(r.dir===0||v*r.dir>0?pro:con).push([k,v])}
+  const fm=a=>a.sort((x,y)=>Math.abs(y[1])-Math.abs(x[1])).map(([k,v])=>PVN[k]+" ("+pf(v)+")").join(" + ");
+  if(r.dir!==0){const s=pvStr(r);t+="\n  Forza: "+s.a+" a favore"+(s.fr?" (fragile)":"")+", "+s.c+" contrari";t+="\n  Motivo: "+fm(pro)+(con.length?"; contro: "+fm(con):"")+" → totale "+pf(r.sc)+" (soglia ±"+P.th+")"}
+  else t+="\n  Nessuna indicazione abbastanza forte: totale "+pf(r.sc)+" dentro la soglia ±"+P.th+(pro.length?" ("+fm(pro)+")":"");
+  return t}
 function pvText(r){const dd=r.dir>0?"SU":r.dir<0?"GIÙ":"NEUTRA";let t="— PREVISIONE "+dd+" ("+r.h+" min, regole "+r.ver+") alle "+fmtT(r.t,true)+" @ "+pvF(r.p,1)+"\n  PERCHÉ: "+(r.why||pvWhy(r));
   if(r.res&&!r.res.void)t+="\n  esito: "+(r.res.ok?"ESATTA":"SBAGLIATA")+", prezzo "+pvF(r.res.p1,1)+" ("+(r.res.ret>=0?"+":"")+pvF(r.res.ret)+"%)"+(r.res.net!==null?", netto dei costi "+(r.res.net>=0?"+":"")+pvF(r.res.net)+"%":"");
   else if(r.res&&r.res.void)t+="\n  non verificabile (dati mancanti)";else t+="\n  in attesa della verifica";return t}
@@ -634,10 +646,10 @@ function pvPanel(){arPanel();const vers=[...new Set(PV.map(r=>r.ver))],cur=opt.p
   $("pvS").innerHTML=h;const lp=PV[PV.length-1];$("pvW").hidden=!lp;if(lp)$("pvW").textContent="Ultima previsione ("+fmtT(lp.t,false)+"): "+(lp.dir>0?"SU":lp.dir<0?"GIÙ":"NEUTRA")+". "+(lp.why||pvWhy(lp))}
 function pvSync(){$("pvA").checked=!!opt.pvOn;$("pvH").value=String(opt.pvH);$("pvC").value=opt.pvCost;$("bPv").classList.toggle("on",!!opt.pvOn)}
 function pvCsv(all){const rows=(all?PV:PV.slice(-200)).filter(r=>r.res&&!r.res.void),P=opt.pvP,ks=Object.keys(P.w);
-  const hd=["t_utc","ver","h_min","fonte","dir","score","p0","p1","ret_pct","ok","netto_pct"].concat(ks,["v5_pct","v30_pct","ora_utc","fermo","ret15","ok15","net15","ret30","ok30","net30"]);
+  const hd=["t_utc","ver","h_min","fonte","dir","score","p0","p1","ret_pct","ok","netto_pct"].concat(ks,["v5_pct","v30_pct","ora_utc","fermo","ret15","ok15","net15","ret30","ok30","net30","concordi","contrari","fragile"]);
   const L=["# REGISTRO PREVISIONI MAPPA — regole correnti: "+JSON.stringify(P)+" ; costo "+opt.pvCost+"% ; "+rows.length+" righe verificate"+(all?"":" (ultime 200)")+" ; v5/v30 = escursione max-min del prezzo negli ultimi 5/30 min in %; fermo=1 se la regola vmin ha forzato neutra",hd.join(",")];
   const xc=(r,H)=>{const y=r.x&&r.x[H];return y&&!y.void?[y.ret,y.ok?1:0,y.net===null?"":y.net]:["","",""]};
-  for(const r of rows)L.push([new Date(r.t).toISOString(),r.ver,r.h,r.fe,r.dir,r.sc,r.p,r.res.p1,r.res.ret,r.res.ok?1:0,r.res.net===null?"":r.res.net].concat(ks.map(k=>r.f[k]||0),[r.c?r.c.v5:"",r.c?r.c.v30:"",r.c?r.c.hr:"",r.q?1:0],xc(r,15),xc(r,30)).join(","));return L.join("\n")}
+  for(const r of rows)L.push([new Date(r.t).toISOString(),r.ver,r.h,r.fe,r.dir,r.sc,r.p,r.res.p1,r.res.ret,r.res.ok?1:0,r.res.net===null?"":r.res.net].concat(ks.map(k=>r.f[k]||0),[r.c?r.c.v5:"",r.c?r.c.v30:"",r.c?r.c.hr:"",r.q?1:0],xc(r,15),xc(r,30),r.dir?[pvStr(r).a,pvStr(r).c,pvStr(r).fr]:["","",""]).join(","));return L.join("\n")}
 $("bPv").onclick=()=>{const h=$("pp");h.hidden=!h.hidden;pvSync();pvPanel();pvStatus()};pvBoot();
 $("pvA").onchange=e=>{opt.pvOn=e.target.checked;saveOpt();pvSync();dirty=true;draw()};
 $("pvH").onchange=e=>{opt.pvH=+e.target.value;PVslot=-1;saveOpt()};
